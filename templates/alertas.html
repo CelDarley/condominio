@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas - SegCond{% endblock %}
+
+{% block content %}
+<div class="alertas-container">
+    <div class="alertas-header">
+        <a href="{{ url_for('home') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+        <h2>Alertas e Notificações</h2>
+    </div>
+
+    <div class="alertas-content">
+        <div class="alertas-section">
+            <h3>Alertas Ativos</h3>
+            
+            {% if alertas %}
+                <div class="alertas-list">
+                    {% for alerta in alertas %}
+                    <div class="alerta-card" data-alerta-id="{{ alerta.id }}">
+                        <div class="alerta-header">
+                            <div class="alerta-info">
+                                <h4>Alerta de {{ alerta.morador }}</h4>
+                                <span class="alerta-time">{{ alerta.timestamp.strftime('%d/%m/%Y %H:%M') }}</span>
+                            </div>
+                            <div class="alerta-status">
+                                <span class="status-badge status-urgent">Urgente</span>
+                            </div>
+                        </div>
+                        
+                        <div class="alerta-message">
+                            <p>{{ alerta.mensagem }}</p>
+                        </div>
+                        
+                        <div class="alerta-actions">
+                            <button class="btn-responder" onclick="responderAlerta({{ alerta.id }})">
+                                <i class="fas fa-reply"></i>
+                                Responder
+                            </button>
+                            <button class="btn-atender" onclick="atenderAlerta({{ alerta.id }})">
+                                <i class="fas fa-check"></i>
+                                Marcar como Atendido
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-alerts">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>Nenhum alerta ativo no momento</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="notificacoes-section">
+            <h3>Notificações</h3>
+            <div class="notificacoes-list" id="notificacoes-list">
+                <!-- Notificações serão carregadas dinamicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para responder alerta -->
+<div id="resposta-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Responder Alerta</h3>
+            <span class="close">&times;</span>
+        </div>
+        <form id="resposta-form" class="resposta-form">
+            <input type="hidden" id="alerta-id" name="alerta_id">
+            <div class="form-group">
+                <label for="resposta-mensagem">Sua resposta:</label>
+                <textarea id="resposta-mensagem" name="mensagem" required 
+                          placeholder="Digite sua resposta ao morador" rows="4"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-cancel">Cancelar</button>
+                <button type="submit" class="btn-send">Enviar Resposta</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let alertasAtivos = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarAlertas();
+    
+    // Verificar novos alertas a cada 30 segundos
+    setInterval(carregarAlertas, 30000);
+    
+    // Modal de resposta
+    const modal = document.getElementById('resposta-modal');
+    const closeBtn = document.querySelector('.close');
+    const btnCancel = document.querySelector('.btn-cancel');
+    
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+    }
+    
+    btnCancel.onclick = function() {
+        modal.style.display = 'none';
+    }
+    
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    // Formulário de resposta
+    document.getElementById('resposta-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const alertaId = document.getElementById('alerta-id').value;
+        const mensagem = document.getElementById('resposta-mensagem').value;
+        
+        // Aqui você implementaria o envio da resposta
+        console.log('Respondendo alerta:', alertaId, mensagem);
+        
+        modal.style.display = 'none';
+        this.reset();
+    });
+});
+
+// Função para carregar alertas
+async function carregarAlertas() {
+    try {
+        const response = await fetch('/api/alertas');
+        const data = await response.json();
+        
+        alertasAtivos = data;
+        atualizarContadorAlertas(data.length);
+        atualizarListaNotificacoes(data);
+    } catch (error) {
+        console.error('Erro ao carregar alertas:', error);
+    }
+}
+
+// Função para atualizar contador de alertas
+function atualizarContadorAlertas(count) {
+    const alertCount = document.getElementById('alert-count');
+    if (alertCount) {
+        if (count > 0) {
+            alertCount.textContent = count;
+            alertCount.style.display = 'inline';
+        } else {
+            alertCount.style.display = 'none';
+        }
+    }
+}
+
+// Função para atualizar lista de notificações
+function atualizarListaNotificacoes(alertas) {
+    const notificacoesList = document.getElementById('notificacoes-list');
+    
+    if (alertas.length === 0) {
+        notificacoesList.innerHTML = `
+            <div class="no-notifications">
+                <i class="fas fa-bell-slash"></i>
+                <p>Nenhuma notificação no momento</p>
+            </div>
+        `;
+        return;
+    }
+    
+    notificacoesList.innerHTML = alertas.map(alerta => `
+        <div class="notificacao-item">
+            <div class="notificacao-icon">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+            </div>
+            <div class="notificacao-content">
+                <h5>Alerta de ${alerta.morador}</h5>
+                <p>${alerta.mensagem}</p>
+                <small>${new Date(alerta.timestamp).toLocaleString('pt-BR')}</small>
+            </div>
+        </div>
+    `).join('');
+}
+        this.reset();
+    });
+});
+
+// Função para carregar alertas
+async function carregarAlertas() {
+    try {
+        const response = await fetch('/api/alertas');
+        const data = await response.json();
+        
+        alertasAtivos = data;
+        atualizarContadorAlertas(data.length);
+        atualizarListaNotificacoes(data);
+    } catch (error) {
+        console.error('Erro ao carregar alertas:', error);
+    }
+}
+
+// Função para atualizar contador de alertas
+function atualizarContadorAlertas(count) {
+    const alertCount = document.getElementById('alert-count');
+    if (alertCount) {
+        if (count > 0) {
+            alertCount.textContent = count;
+            alertCount.style.display = 'inline';
+        } else {
+            alertCount.style.display = 'none';
+        }
+    }
+}
+
+// Função para atualizar lista de notificações
+function atualizarListaNotificacoes(alertas) {
+    const notificacoesList = document.getElementById('notificacoes-list');
+    
+    if (alertas.length === 0) {
+        notificacoesList.innerHTML = `
+            <div class="no-notifications">
+                <i class="fas fa-bell-slash"></i>
+                <p>Nenhuma notificação no momento</p>
+            </div>
+        `;
+        return;
+    }
+    
+    notificacoesList.innerHTML = alertas.map(alerta => `
+        <div class="notificacao-item">
+            <div class="notificacao-icon">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+            </div>
+            <div class="notificacao-content">
+                <h5>Alerta de ${alerta.morador}</h5>
+                <p>${alerta.mensagem}</p>
+                <small>${new Date(alerta.timestamp).toLocaleString('pt-BR')}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Função para responder a alertas
+function responderAlerta(alertaId) {
+    document.getElementById('alerta-id').value = alertaId;
+    document.getElementById('resposta-modal').style.display = 'block';
+}
+
+// Função para atender alertas
+function atenderAlerta(alertaId) {
+    if (confirm('Confirmar que este alerta foi atendido?')) {
+        fetch(`/atender_alerta/${alertaId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remover o alerta da interface
+                document.querySelector(`[data-alerta-id="${alertaId}"]`).remove();
+                
+                // Atualizar contador
+                const alertasRestantes = document.querySelectorAll('.alerta-card').length;
+                atualizarContadorAlertas(alertasRestantes);
+                
+                showNotification('Alerta marcado como atendido', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            showNotification('Erro ao atender alerta', 'error');
+        });
+    }
+}
+
+// Função para mostrar notificações
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

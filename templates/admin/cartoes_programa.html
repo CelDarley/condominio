@@ -1,0 +1,491 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Cartões Programa - SegCond Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-route me-2"></i>
+                Cartões Programa
+            </h1>
+            <p class="text-muted">Gerencie as rotas de vigilância do sistema</p>
+        </div>
+        <a href="{{ url_for('admin_novo_cartao_programa') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>
+            Novo Cartão Programa
+        </a>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control table-filter" placeholder="Buscar cartões programa...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">Todos os status</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="inativo">Inativos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" onclick="window.location.reload()">
+                            <i class="fas fa-refresh me-2"></i>
+                            Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Cartões Programa -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list me-2"></i>
+                    Cartões Programa Cadastrados
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if cartoes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th>Pontos Base</th>
+                                <th>Itinerários</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cartao in cartoes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cartao.nome }}</strong>
+                                </td>
+                                <td>
+                                    {% if cartao.descricao %}
+                                        <span class="text-truncate-2" title="{{ cartao.descricao }}">
+                                            {{ cartao.descricao }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Sem descrição</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ cartao.horarios_pontos|length if cartao.horarios_pontos else 0 }}</span>
+                                    pontos
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ cartao.itinerarios|length if cartao.itinerarios else 0 }}</span>
+                                    rotas
+                                </td>
+                                <td>
+                                    {% if cartao.ativo %}
+                                        <span class="badge badge-active">Ativo</span>
+                                    {% else %}
+                                        <span class="badge badge-inactive">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin_configurar_cartao_programa', id=cartao.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Configurar">
+                                            <i class="fas fa-cog"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-info" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Ver detalhes"
+                                                onclick="verDetalhesCartao({{ cartao.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Editar"
+                                                onclick="editarCartao({{ cartao.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-success" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Duplicar"
+                                                onclick="duplicarCartao({{ cartao.id }})">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-route fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum cartão programa cadastrado</h5>
+                    <p class="text-muted">Comece criando o primeiro cartão programa do sistema</p>
+                    <a href="{{ url_for('admin_novo_cartao_programa') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Criar Primeiro Cartão Programa
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div class="modal fade" id="detalhesModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Cartão Programa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalhesModalBody">
+                <!-- Conteúdo será carregado via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="configurarCartao()">Configurar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="editarModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Cartão Programa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editarModalBody">
+                <!-- Formulário será carregado aqui -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarEdicao()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cartaoAtual = null;
+
+function verDetalhesCartao(cartaoId) {
+    cartaoAtual = cartaoId;
+    const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+    const modalBody = document.getElementById('detalhesModalBody');
+    
+    // Mostrar loading
+    modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    
+    // Carregar detalhes via AJAX
+    fetch(`/admin/api/cartoes-programa/${cartaoId}`)
+        .then(response => response.json())
+        .then(data => {
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informações Básicas</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Nome:</strong></td><td>${data.nome}</td></tr>
+                            <tr><td><strong>Status:</strong></td><td>${data.ativo ? 'Ativo' : 'Inativo'}</td></tr>
+                            <tr><td><strong>Criado em:</strong></td><td>${new Date(data.data_criacao).toLocaleDateString('pt-BR')}</td></tr>
+                        </table>
+                        
+                        <h6>Descrição</h6>
+                        <p>${data.descricao || 'Sem descrição'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Resumo</h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h4>${data.horarios_pontos ? data.horarios_pontos.length : 0}</h4>
+                                        <small>Pontos Base</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h4>${data.itinerarios ? data.itinerarios.length : 0}</h4>
+                                        <small>Itinerários</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Pontos Base e Horários</h6>
+                        <div id="pontosHorarios">
+                            <!-- Será carregado via AJAX -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Itinerários</h6>
+                        <div id="itinerarios">
+                            <!-- Será carregado via AJAX -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Carregar pontos e horários
+            carregarPontosHorarios(cartaoId);
+            carregarItinerarios(cartaoId);
+            
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar detalhes</div>';
+            modal.show();
+        });
+}
+
+function carregarPontosHorarios(cartaoId) {
+    const container = document.getElementById('pontosHorarios');
+    
+    fetch(`/admin/api/cartoes-programa/${cartaoId}/pontos-horarios`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                let html = '<div class="table-responsive"><table class="table table-sm">';
+                html += '<thead><tr><th>Ordem</th><th>Ponto Base</th><th>Início</th><th>Fim</th><th>Duração</th><th>Instruções</th></tr></thead><tbody>';
+                
+                data.forEach(item => {
+                    html += `
+                        <tr>
+                            <td><span class="badge bg-primary">${item.ordem}</span></td>
+                            <td><strong>${item.ponto_base.nome}</strong></td>
+                            <td>${item.horario_inicio}</td>
+                            <td>${item.horario_fim}</td>
+                            <td>${item.duracao_minutos} min</td>
+                            <td>${item.instrucoes || '-'}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-muted">Nenhum ponto base configurado</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            container.innerHTML = '<div class="alert alert-danger">Erro ao carregar pontos e horários</div>';
+        });
+}
+
+function carregarItinerarios(cartaoId) {
+    const container = document.getElementById('itinerarios');
+    
+    fetch(`/admin/api/cartoes-programa/${cartaoId}/itinerarios`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                let html = '<div class="list-group">';
+                data.forEach(item => {
+                    html += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-secondary me-2">${item.ordem}</span>
+                                    <strong>${item.ponto_origem.nome}</strong>
+                                    <i class="fas fa-arrow-right mx-2"></i>
+                                    <strong>${item.ponto_destino.nome}</strong>
+                                </div>
+                                <small class="text-muted">
+                                    ${item.tempo_estimado ? item.tempo_estimado + ' min' : 'Tempo não definido'}
+                                </small>
+                            </div>
+                            ${item.instrucoes ? `<small class="text-muted">${item.instrucoes}</small>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-muted">Nenhum itinerário configurado</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            container.innerHTML = '<div class="alert alert-danger">Erro ao carregar itinerários</div>';
+        });
+}
+
+function editarCartao(cartaoId) {
+    cartaoAtual = cartaoId;
+    const modal = new bootstrap.Modal(document.getElementById('editarModal'));
+    const modalBody = document.getElementById('editarModalBody');
+    
+    // Mostrar loading
+    modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    
+    // Carregar dados para edição
+    fetch(`/admin/api/cartoes-programa/${cartaoId}`)
+        .then(response => response.json())
+        .then(data => {
+            modalBody.innerHTML = `
+                <form id="formEditarCartao">
+                    <input type="hidden" name="cartao_id" value="${data.id}">
+                    
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="${data.nome}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3">${data.descricao || ''}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ativo" name="ativo" ${data.ativo ? 'checked' : ''}>
+                            <label class="form-check-label" for="ativo">
+                                Cartão ativo
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            `;
+            
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar dados para edição</div>';
+            modal.show();
+        });
+}
+
+function salvarEdicao() {
+    const form = document.getElementById('formEditarCartao');
+    const formData = new FormData(form);
+    
+    // Mostrar loading
+    const btnSalvar = document.querySelector('#editarModal .btn-primary');
+    const originalText = btnSalvar.innerHTML;
+    btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+    btnSalvar.disabled = true;
+    
+    // Enviar dados
+    fetch(`/admin/api/cartoes-programa/${cartaoAtual}/editar`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.segCondAdmin.showNotification('Cartão programa atualizado com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editarModal')).hide();
+            // Recarregar página para mostrar mudanças
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            window.segCondAdmin.showNotification(data.message || 'Erro ao atualizar cartão programa', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        window.segCondAdmin.showNotification('Erro ao atualizar cartão programa', 'error');
+    })
+    .finally(() => {
+        btnSalvar.innerHTML = originalText;
+        btnSalvar.disabled = false;
+    });
+}
+
+function duplicarCartao(cartaoId) {
+    if (confirm('Deseja duplicar este cartão programa? Será criada uma cópia com o nome "Cópia de [nome original]"')) {
+        // Mostrar loading
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        btn.disabled = true;
+        
+        fetch(`/admin/api/cartoes-programa/${cartaoId}/duplicar`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.segCondAdmin.showNotification('Cartão programa duplicado com sucesso!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                window.segCondAdmin.showNotification(data.message || 'Erro ao duplicar cartão programa', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            window.segCondAdmin.showNotification('Erro ao duplicar cartão programa', 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        });
+    }
+}
+
+function configurarCartao() {
+    if (cartaoAtual) {
+        window.location.href = `/admin/cartoes-programa/${cartaoAtual}/configurar`;
+    }
+}
+
+// Filtro por status
+document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(5)');
+        if (status === '' || statusCell.textContent.toLowerCase().includes(status)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

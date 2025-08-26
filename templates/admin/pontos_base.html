@@ -1,0 +1,420 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Pontos Base - SegCond Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-map-marker-alt me-2"></i>
+                Pontos Base
+            </h1>
+            <p class="text-muted">Gerencie os pontos base do sistema</p>
+        </div>
+        <a href="{{ url_for('admin_novo_ponto_base') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>
+            Novo Ponto Base
+        </a>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control table-filter" placeholder="Buscar pontos base...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">Todos os status</option>
+                            <option value="ativo">Ativos</option>
+                            <option value="inativo">Inativos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" onclick="window.location.reload()">
+                            <i class="fas fa-refresh me-2"></i>
+                            Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Pontos Base -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list me-2"></i>
+                    Pontos Base Cadastrados
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if pontos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Endereço</th>
+                                <th>Descrição</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ponto in pontos %}
+                            <tr>
+                                <td>
+                                    <strong>{{ ponto.nome }}</strong>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ ponto.endereco }}</span>
+                                </td>
+                                <td>
+                                    {% if ponto.descricao %}
+                                        <span class="text-truncate-2" title="{{ ponto.descricao }}">
+                                            {{ ponto.descricao }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Sem descrição</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if ponto.ativo %}
+                                        <span class="badge badge-active">Ativo</span>
+                                    {% else %}
+                                        <span class="badge badge-inactive">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin_editar_ponto_base', id=ponto.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-info" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Ver detalhes"
+                                                onclick="verDetalhesPonto({{ ponto.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Configurar horários"
+                                                onclick="configurarHorarios({{ ponto.id }})">
+                                            <i class="fas fa-clock"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum ponto base cadastrado</h5>
+                    <p class="text-muted">Comece criando o primeiro ponto base do sistema</p>
+                    <a href="{{ url_for('admin_novo_ponto_base') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Criar Primeiro Ponto Base
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div class="modal fade" id="detalhesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Ponto Base</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalhesModalBody">
+                <!-- Conteúdo será carregado via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configuração de Horários -->
+<div class="modal fade" id="horariosModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Configurar Horários do Ponto Base</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="horariosModalBody">
+                <!-- Conteúdo será carregado via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarHorarios()">Salvar Horários</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function verDetalhesPonto(pontoId) {
+    const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+    const modalBody = document.getElementById('detalhesModalBody');
+    
+    // Mostrar loading
+    modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    
+    // Carregar detalhes via AJAX
+    fetch(`/admin/api/pontos-base/${pontoId}`)
+        .then(response => response.json())
+        .then(data => {
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informações Básicas</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Nome:</strong></td><td>${data.nome}</td></tr>
+                            <tr><td><strong>Endereço:</strong></td><td>${data.endereco}</td></tr>
+                            <tr><td><strong>Status:</strong></td><td>${data.ativo ? 'Ativo' : 'Inativo'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Descrição</h6>
+                        <p>${data.descricao || 'Sem descrição'}</p>
+                        
+                        <h6>Instruções</h6>
+                        <p>${data.instrucoes || 'Sem instruções específicas'}</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Cartões Programa que utilizam este ponto</h6>
+                        <div id="cartoesPrograma">
+                            <!-- Será carregado via AJAX -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Carregar cartões programa
+            carregarCartoesPrograma(pontoId);
+            
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar detalhes</div>';
+            modal.show();
+        });
+}
+
+function carregarCartoesPrograma(pontoId) {
+    const container = document.getElementById('cartoesPrograma');
+    
+    fetch(`/admin/api/pontos-base/${pontoId}/cartoes-programa`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                let html = '<div class="list-group">';
+                data.forEach(cartao => {
+                    html += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${cartao.nome}</h6>
+                                    <small class="text-muted">${cartao.descricao || 'Sem descrição'}</small>
+                                </div>
+                                <a href="/admin/cartoes-programa/${cartao.id}/configurar" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    Configurar
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p class="text-muted">Este ponto não está sendo usado em nenhum cartão programa</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            container.innerHTML = '<div class="alert alert-danger">Erro ao carregar cartões programa</div>';
+        });
+}
+
+function configurarHorarios(pontoId) {
+    const modal = new bootstrap.Modal(document.getElementById('horariosModal'));
+    const modalBody = document.getElementById('horariosModalBody');
+    
+    // Mostrar loading
+    modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    
+    // Carregar configuração de horários via AJAX
+    fetch(`/admin/api/pontos-base/${pontoId}/horarios`)
+        .then(response => response.json())
+        .then(data => {
+            modalBody.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Configure os horários de permanência neste ponto base para cada cartão programa
+                </div>
+                
+                <div id="configuracaoHorarios">
+                    <!-- Formulário será carregado aqui -->
+                </div>
+            `;
+            
+            // Carregar formulário de configuração
+            carregarFormularioHorarios(pontoId, data);
+            
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            modalBody.innerHTML = '<div class="alert alert-danger">Erro ao carregar configuração de horários</div>';
+            modal.show();
+        });
+}
+
+function carregarFormularioHorarios(pontoId, horarios) {
+    const container = document.getElementById('configuracaoHorarios');
+    
+    // Buscar cartões programa disponíveis
+    fetch('/admin/api/cartoes-programa')
+        .then(response => response.json())
+        .then(cartoes => {
+            let html = '<form id="formHorarios">';
+            html += `<input type="hidden" name="ponto_id" value="${pontoId}">`;
+            
+            cartoes.forEach(cartao => {
+                const horario = horarios.find(h => h.cartao_programa_id === cartao.id);
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">${cartao.nome}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Horário de Início</label>
+                                    <input type="time" class="form-control" 
+                                           name="horario_inicio_${cartao.id}" 
+                                           value="${horario ? horario.horario_inicio : ''}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Horário de Fim</label>
+                                    <input type="time" class="form-control" 
+                                           name="horario_fim_${cartao.id}" 
+                                           value="${horario ? horario.horario_fim : ''}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Duração (min)</label>
+                                    <input type="number" class="form-control" 
+                                           name="duracao_${cartao.id}" 
+                                           value="${horario ? horario.duracao_minutos : 30}" 
+                                           min="1" max="480" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Instruções</label>
+                                    <input type="text" class="form-control" 
+                                           name="instrucoes_${cartao.id}" 
+                                           value="${horario ? horario.instrucoes : ''}" 
+                                           placeholder="Ex: Verificar portas, olhar para...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</form>';
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            container.innerHTML = '<div class="alert alert-danger">Erro ao carregar cartões programa</div>';
+        });
+}
+
+function salvarHorarios() {
+    const form = document.getElementById('formHorarios');
+    const formData = new FormData(form);
+    
+    // Mostrar loading
+    const btnSalvar = document.querySelector('#horariosModal .btn-primary');
+    const originalText = btnSalvar.innerHTML;
+    btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+    btnSalvar.disabled = true;
+    
+    // Enviar dados
+    fetch('/admin/api/pontos-base/horarios/salvar', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.segCondAdmin.showNotification('Horários salvos com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('horariosModal')).hide();
+        } else {
+            window.segCondAdmin.showNotification(data.message || 'Erro ao salvar horários', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        window.segCondAdmin.showNotification('Erro ao salvar horários', 'error');
+    })
+    .finally(() => {
+        btnSalvar.innerHTML = originalText;
+        btnSalvar.disabled = false;
+    });
+}
+
+// Filtro por status
+document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(4)');
+        if (status === '' || statusCell.textContent.toLowerCase().includes(status)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

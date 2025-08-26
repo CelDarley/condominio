@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Login - SegCond{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <i class="fas fa-shield-alt login-icon"></i>
+            <h2>SegCond</h2>
+            <p>Sistema de Vigilância</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('index') }}" class="login-form">
+            <div class="form-group">
+                <label for="email">
+                    <i class="fas fa-envelope"></i>
+                    Email
+                </label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="Digite seu email" autocomplete="email">
+            </div>
+            
+            <div class="form-group">
+                <label for="senha">
+                    <i class="fas fa-lock"></i>
+                    Senha
+                </label>
+                <input type="password" id="senha" name="senha" required 
+                       placeholder="Digite sua senha" autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt"></i>
+                Entrar
+            </button>
+        </form>
+        
+        <div class="login-footer">
+            <p>© 2024 SegCond - Todos os direitos reservados</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,391 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Novo Ponto Base - SegCond Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('admin_pontos_base') }}">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        Pontos Base
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Novo Ponto Base</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Novo Ponto Base
+                </h1>
+                <p class="text-muted">Cadastre um novo ponto base no sistema</p>
+            </div>
+            <a href="{{ url_for('admin_pontos_base') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    Informações do Ponto Base
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Nome do Ponto Base *
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nome" 
+                                       name="nome" 
+                                       required 
+                                       placeholder="Ex: Portaria Principal, Torre A, Estacionamento">
+                                <div class="invalid-feedback">
+                                    Por favor, informe o nome do ponto base.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endereco" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    Endereço/Localização *
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="endereco" 
+                                       name="endereco" 
+                                       required 
+                                       placeholder="Ex: Rua das Flores, 123 - Bloco A">
+                                <div class="invalid-feedback">
+                                    Por favor, informe o endereço do ponto base.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="descricao" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>
+                                    Descrição
+                                </label>
+                                <textarea class="form-control" 
+                                          id="descricao" 
+                                          name="descricao" 
+                                          rows="3" 
+                                          placeholder="Descreva as características do ponto base, pontos de referência, etc."></textarea>
+                                <div class="form-text">
+                                    Informações adicionais que ajudem a identificar o local.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="instrucoes" class="form-label">
+                                    <i class="fas fa-clipboard-list me-1"></i>
+                                    Instruções para o Vigilante
+                                </label>
+                                <textarea class="form-control" 
+                                          id="instrucoes" 
+                                          name="instrucoes" 
+                                          rows="4" 
+                                          placeholder="Ex: Verificar portas, olhar para a rua, verificar movimento de pessoas, etc."></textarea>
+                                <div class="form-text">
+                                    Orientações específicas sobre o que o vigilante deve fazer neste ponto.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tipo_ponto" class="form-label">
+                                    <i class="fas fa-cog me-1"></i>
+                                    Tipo de Ponto
+                                </label>
+                                <select class="form-select" id="tipo_ponto" name="tipo_ponto">
+                                    <option value="portaria">Portaria</option>
+                                    <option value="torre">Torre/Bloco</option>
+                                    <option value="estacionamento">Estacionamento</option>
+                                    <option value="area_comum">Área Comum</option>
+                                    <option value="entrada">Entrada/Saída</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="prioridade" class="form-label">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Prioridade
+                                </label>
+                                <select class="form-select" id="prioridade" name="prioridade">
+                                    <option value="baixa">Baixa</option>
+                                    <option value="media" selected>Média</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="critica">Crítica</option>
+                                </select>
+                                <div class="form-text">
+                                    Define a importância do ponto para a segurança.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="horario_funcionamento" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Horário de Funcionamento
+                                </label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="time" 
+                                               class="form-control" 
+                                               id="horario_inicio" 
+                                               name="horario_inicio" 
+                                               value="06:00">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="time" 
+                                               class="form-control" 
+                                               id="horario_fim" 
+                                               name="horario_fim" 
+                                               value="22:00">
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Horário em que o ponto deve ser monitorado.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="frequencia_visita" class="form-label">
+                                    <i class="fas fa-calendar-check me-1"></i>
+                                    Frequência de Visita
+                                </label>
+                                <select class="form-select" id="frequencia_visita" name="frequencia_visita">
+                                    <option value="continua">Contínua (24h)</option>
+                                    <option value="periodica">Periódica (a cada 30 min)</option>
+                                    <option value="aleatoria">Aleatória</option>
+                                    <option value="eventos">Apenas em eventos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="requer_equipamento" name="requer_equipamento">
+                                    <label class="form-check-label" for="requer_equipamento">
+                                        <i class="fas fa-tablet-alt me-1"></i>
+                                        Requer equipamento específico (rádio, tablet, etc.)
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="requer_identificacao" name="requer_identificacao">
+                                    <label class="form-check-label" for="requer_identificacao">
+                                        <i class="fas fa-id-card me-1"></i>
+                                        Requer identificação de visitantes
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="requer_controle_acesso" name="requer_controle_acesso">
+                                    <label class="form-check-label" for="requer_controle_acesso">
+                                        <i class="fas fa-key me-1"></i>
+                                        Requer controle de acesso
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin_pontos_base') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>
+                            Cancelar
+                        </a>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Salvar Ponto Base
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview do Ponto Base -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-eye me-2"></i>
+                    Preview do Ponto Base
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="previewPontoBase" class="text-center text-muted">
+                    <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                    <p>Preencha os campos acima para ver o preview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validação em tempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+    
+    // Preview em tempo real
+    const previewFields = ['nome', 'endereco', 'descricao', 'instrucoes', 'tipo_ponto', 'prioridade'];
+    previewFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updatePreview);
+        }
+    });
+    
+    // Atualizar preview inicial
+    updatePreview();
+});
+
+function updatePreview() {
+    const nome = document.getElementById('nome')?.value || '';
+    const endereco = document.getElementById('endereco')?.value || '';
+    const descricao = document.getElementById('descricao')?.value || '';
+    const instrucoes = document.getElementById('instrucoes')?.value || '';
+    const tipoPonto = document.getElementById('tipo_ponto')?.value || '';
+    const prioridade = document.getElementById('prioridade')?.value || '';
+    
+    const preview = document.getElementById('previewPontoBase');
+    
+    if (nome && endereco) {
+        let html = `
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        ${nome}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Endereço:</strong> ${endereco}</p>
+                            <p><strong>Tipo:</strong> ${getTipoPontoLabel(tipoPonto)}</p>
+                            <p><strong>Prioridade:</strong> ${getPrioridadeLabel(prioridade)}</p>
+                        </div>
+                        <div class="col-md-6">
+                            ${descricao ? `<p><strong>Descrição:</strong> ${descricao}</p>` : ''}
+                            ${instrucoes ? `<p><strong>Instruções:</strong> ${instrucoes}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        preview.innerHTML = html;
+    } else {
+        preview.innerHTML = `
+            <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+            <p>Preencha os campos obrigatórios para ver o preview</p>
+        `;
+    }
+}
+
+function getTipoPontoLabel(tipo) {
+    const tipos = {
+        'portaria': 'Portaria',
+        'torre': 'Torre/Bloco',
+        'estacionamento': 'Estacionamento',
+        'area_comum': 'Área Comum',
+        'entrada': 'Entrada/Saída',
+        'outro': 'Outro'
+    };
+    return tipos[tipo] || tipo;
+}
+
+function getPrioridadeLabel(prioridade) {
+    const prioridades = {
+        'baixa': '<span class="badge bg-success">Baixa</span>',
+        'media': '<span class="badge bg-warning">Média</span>',
+        'alta': '<span class="badge bg-danger">Alta</span>',
+        'critica': '<span class="badge bg-dark">Crítica</span>'
+    };
+    return prioridades[prioridade] || prioridade;
+}
+
+// Validação do formulário antes do envio
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Mostrar mensagem de erro
+        window.segCondAdmin.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error');
+    }
+    
+    this.classList.add('was-validated');
+});
+</script>
+{% endblock %}

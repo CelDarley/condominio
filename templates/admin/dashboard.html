@@ -1,0 +1,177 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - SegCond Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard
+        </h1>
+        <p class="text-muted">Visão geral do sistema SegCond</p>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Vigilantes Ativos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_usuarios }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Pontos Base
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_pontos_base }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-map-marker-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Cartões Programa
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_cartoes_programa }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-route fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Escalas Ativas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_escalas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-bolt me-2"></i>
+                    Ações Rápidas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_novo_ponto_base') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            Novo Ponto Base
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_novo_cartao_programa') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            Novo Cartão Programa
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_novo_usuario') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Novo Vigilante
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('admin_nova_escala') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-calendar-plus me-2"></i>
+                            Nova Escala
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo das Escalas da Semana -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calendar-week me-2"></i>
+                    Escalas da Semana
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="escalasTable">
+                        <thead>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Vigilante</th>
+                                <th>Posto de Trabalho</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Nenhuma escala configurada para esta semana
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Aqui você pode adicionar JavaScript para carregar dados dinâmicos
+    // como as escalas da semana atual
+});
+</script>
+{% endblock %}

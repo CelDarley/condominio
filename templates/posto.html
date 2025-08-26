@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ posto.nome }} - SegCond{% endblock %}
+
+{% block content %}
+<div class="posto-container">
+    <div class="posto-header">
+        <a href="{{ url_for('home') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+        <h2>{{ posto.nome }}</h2>
+        {% if posto.descricao %}
+        <p class="posto-description">{{ posto.descricao }}</p>
+        {% endif %}
+    </div>
+
+    <div class="posto-content">
+        <div class="pontos-base-section">
+            <h3>Pontos Base</h3>
+            <div class="pontos-base">
+                {% for ponto in pontos_base %}
+                <div class="ponto-base-card" data-ponto-id="{{ ponto.id }}">
+                    <div class="ponto-header">
+                        <div class="ponto-info">
+                            <h4>{{ ponto.nome }}</h4>
+                            <span class="ponto-ordem">#{{ ponto.ordem }}</span>
+                        </div>
+                        <div class="ponto-status" id="status-{{ ponto.id }}">
+                            <i class="fas fa-clock"></i>
+                            <span>Pendente</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ponto-details">
+                        <div class="time-info">
+                            <div class="time-item">
+                                <i class="fas fa-play"></i>
+                                <span>Início: {{ ponto.horario_inicio.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="time-item">
+                                <i class="fas fa-stop"></i>
+                                <span>Fim: {{ ponto.horario_fim.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="time-item">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>Permanência: {{ ponto.tempo_permanencia }} min</span>
+                            </div>
+                        </div>
+                        
+                        {% if ponto.descricao %}
+                        <div class="ponto-description">
+                            <p>{{ ponto.descricao }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if ponto.instrucoes %}
+                        <div class="ponto-instructions">
+                            <h5>Instruções:</h5>
+                            <p>{{ ponto.instrucoes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="ponto-actions">
+                        <button class="btn-register-presence" onclick="registrarPresenca({{ ponto.id }})">
+                            <i class="fas fa-check"></i>
+                            <span id="btn-text-{{ ponto.id }}">Registrar Chegada</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if itinerarios %}
+        <div class="itinerarios-section">
+            <h3>Itinerários</h3>
+            <div class="itinerarios">
+                {% for itinerario in itinerarios %}
+                <div class="itinerario-card">
+                    <div class="itinerario-header">
+                        <i class="fas fa-route"></i>
+                        <h4>Rota {{ loop.index }}</h4>
+                    </div>
+                    <div class="itinerario-details">
+                        <div class="route-info">
+                                                    <div class="route-point">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ pontos_base[loop.index0].nome }}</span>
+                        </div>
+                        <div class="route-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        <div class="route-point">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ pontos_base[loop.index0 + 1].nome }}</span>
+                        </div>
+                        </div>
+                        <div class="route-time">
+                            <i class="fas fa-clock"></i>
+                            <span>Tempo estimado: {{ itinerario.tempo_estimado }} min</span>
+                        </div>
+                        {% if itinerario.instrucoes %}
+                        <div class="route-instructions">
+                            <p>{{ itinerario.instrucoes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function registrarPresenca(pontoId) {
+    fetch(`/registrar_presenca/${pontoId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'chegada') {
+            // Atualizar interface para chegada
+            document.getElementById(`status-${pontoId}`).innerHTML = 
+                '<i class="fas fa-check-circle text-success"></i><span>Presente</span>';
+            document.getElementById(`btn-text-${pontoId}`).textContent = 'Registrar Saída';
+            document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`).classList.add('btn-exit');
+        } else if (data.status === 'saida') {
+            // Atualizar interface para saída
+            document.getElementById(`status-${pontoId}`).innerHTML = 
+                '<i class="fas fa-times-circle text-muted"></i><span>Concluído</span>';
+            document.getElementById(`btn-text-${pontoId}`).textContent = 'Concluído';
+            document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`).disabled = true;
+        }
+        
+        // Mostrar mensagem de sucesso
+        showNotification(data.message, 'success');
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showNotification('Erro ao registrar presença', 'error');
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Verificar status atual dos pontos ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    // Aqui você pode implementar uma verificação do status atual dos pontos
+    // para mostrar se o vigilante já está presente em algum local
+});
+</script>
+{% endblock %}
