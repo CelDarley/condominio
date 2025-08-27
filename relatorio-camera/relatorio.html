@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Veículos - Sistema de Câmeras</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    
+    <style>
+        .navbar-brand {
+            font-weight: 600;
+        }
+        
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        
+        .table-responsive {
+            border-radius: 0.375rem;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .table td {
+            vertical-align: middle;
+        }
+        
+        .badge-vehicle-type {
+            font-size: 0.75em;
+        }
+        
+        .confidence-high {
+            background-color: #198754;
+        }
+        
+        .confidence-medium {
+            background-color: #fd7e14;
+        }
+        
+        .confidence-low {
+            background-color: #dc3545;
+        }
+        
+        .direction-up {
+            color: #198754;
+        }
+        
+        .direction-down {
+            color: #dc3545;
+        }
+        
+        .direction-stopped {
+            color: #6c757d;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .stats-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 1rem 0;
+            margin-top: 3rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+        
+        .form-check {
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            background-color: #f8f9fa;
+        }
+        
+        .form-check:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        
+        .form-check-label {
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .form-text .badge {
+            font-size: 0.75em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-camera-video-fill me-2"></i>
+                Sistema de Câmeras
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="bi bi-house me-1"></i>Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-gear me-1"></i>Configurações</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Título da Página -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="bi bi-clipboard-data me-3"></i>
+                    Relatório de Veículos
+                </h1>
+                <p class="lead text-muted">Sistema de monitoramento e análise de tráfego urbano</p>
+            </div>
+        </div>
+
+        <!-- Cards de Estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-car-front-fill fs-1 mb-2"></i>
+                        <div class="stats-number" id="totalVehicles">-</div>
+                        <div>Total de Veículos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-camera-fill fs-1 mb-2"></i>
+                        <div class="stats-number">1</div>
+                        <div>Câmeras Ativas</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-check fs-1 mb-2"></i>
+                        <div class="stats-number">2</div>
+                        <div>Dias Monitorados</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-speedometer2 fs-1 mb-2"></i>
+                        <div class="stats-number" id="avgVehiclesPerHour">-</div>
+                        <div>Veículos/h</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Pesquisa -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-search me-2"></i>
+                    Filtros de Pesquisa
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="data" class="form-label">Data</label>
+                            <input type="date" class="form-control" id="data" name="data">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="hora" class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="hora" name="hora">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="placa" class="form-label">Placa</label>
+                            <input type="text" class="form-control" id="placa" name="placa" placeholder="Digite a placa">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="sentido" class="form-label">Sentido</label>
+                            <select class="form-select" id="sentido" name="sentido">
+                                <option value="">Todos</option>
+                                <option value="subindo">Subindo</option>
+                                <option value="descendo">Descendo</option>
+                                <option value="parado">Parado</option>
+                                <option value="N/D">Não Definido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showPlacasDetectadas" checked>
+                                <label class="form-check-label" for="showPlacasDetectadas">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    Mostrar placas detectadas
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    <span id="placasDetectadasCount" class="badge bg-success">0</span> placas detectadas
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showPlacasNaoDetectadas">
+                                <label class="form-check-label" for="showPlacasNaoDetectadas">
+                                    <i class="bi bi-x-circle-fill text-warning me-2"></i>
+                                    Mostrar placas não detectadas
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    <span id="placasNaoDetectadasCount" class="badge bg-warning">0</span> placas não detectadas
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search me-2"></i>
+                                Pesquisar
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary ms-2">
+                                <i class="bi bi-arrow-clockwise me-2"></i>
+                                Limpar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabela de Dados -->
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-table me-2"></i>
+                        Registros de Detecção
+                    </h5>
+                    <small class="text-muted">
+                        <span id="registrosExibidos">0</span> de <span id="totalRegistros">0</span> registros
+                    </small>
+                </div>
+                <div>
+                    <button class="btn btn-success btn-sm me-2" id="exportBtn">
+                        <i class="bi bi-download me-1"></i>
+                        Exportar
+                    </button>
+                    <button class="btn btn-info btn-sm" id="printBtn">
+                        <i class="bi bi-printer me-1"></i>
+                        Imprimir
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="loading" id="loadingTable">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2">Carregando dados...</p>
+                </div>
+                
+                <div class="table-responsive" id="tableContainer" style="display: none;">
+                    <table class="table table-striped table-hover" id="vehiclesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo</th>
+                                <th>Data</th>
+                                <th>Hora</th>
+                                <th>Placa</th>
+                                <th>Confiança</th>
+                                <th>Cor</th>
+                                <th>Bounding Box</th>
+                                <th>Frame</th>
+                                <th>Sentido</th>
+                                <th>Endereço</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Dados serão carregados dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Sistema de Monitoramento de Tráfego Urbano
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">
+                        <i class="bi bi-clock me-2"></i>
+                        Última atualização: <span id="lastUpdate">-</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        // Dados do CSV (simulando carregamento do arquivo)
+        const vehicleData = [
+            {ID: "1872", Tipo: "Carro", "Hora Detecção": "2025-08-25 22:01:29", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "657,118,1136,677", Frame: "138305", Sentido: "descendo"},
+            {ID: "1875", Tipo: "Carro", "Hora Detecção": "2025-08-25 22:01:33", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "657,118,1145,680", Frame: "138306", Sentido: "N/D"},
+            {ID: "1936", Tipo: "Carro", "Hora Detecção": "2025-08-25 23:21:14", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "625,120,1133,666", Frame: "138315", Sentido: "descendo"},
+            {ID: "1967", Tipo: "Carro", "Hora Detecção": "2025-08-26 05:19:17", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "500,98,1507,679", Frame: "148986", Sentido: "descendo"},
+            {ID: "2015", Tipo: "Carro", "Hora Detecção": "2025-08-26 06:15:27", Placa: "SHS9E93", "Confiança Placa": "0.82", Cor: "branco", "Bounding Box": "1626,10,1898,367", Frame: "151155", Sentido: "descendo"},
+            {ID: "2019", Tipo: "Caminhão/Caminhonete", "Hora Detecção": "2025-08-26 06:19:14", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "611,16,1636,631", Frame: "155078", Sentido: "subindo"},
+            {ID: "2028", Tipo: "Carro", "Hora Detecção": "2025-08-26 06:27:46", Placa: "RMM5F48", "Confiança Placa": "0.78", Cor: "preto", "Bounding Box": "360,38,1499,704", Frame: "155084", Sentido: "descendo"},
+            {ID: "2044", Tipo: "Carro", "Hora Detecção": "2025-08-26 06:52:30", Placa: "OXZ3F93", "Confiança Placa": "0.64", Cor: "preto", "Bounding Box": "397,289,1682,1032", Frame: "157273", Sentido: "descendo"},
+            {ID: "2054", Tipo: "Moto", "Hora Detecção": "2025-08-26 06:55:25", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "443,283,1708,1015", Frame: "157274", Sentido: "N/D"},
+            {ID: "2070", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:01:44", Placa: "DPI0429", "Confiança Placa": "0.97", Cor: "preto", "Bounding Box": "444,219,1800,1049", Frame: "158106", Sentido: "subindo"},
+            {ID: "2072", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:05:36", Placa: "RFI8C67", "Confiança Placa": "0.61", Cor: "vermelho", "Bounding Box": "490,192,1851,1029", Frame: "158107", Sentido: "N/D"},
+            {ID: "2082", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:09:07", Placa: "N/D", "Confiança Placa": "N/D", Cor: "cinza", "Bounding Box": "1528,9,1908,406", Frame: "158525", Sentido: "subindo"},
+            {ID: "2086", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:09:35", Placa: "RVZ1A38", "Confiança Placa": "0.95", Cor: "preto", "Bounding Box": "310,169,1567,937", Frame: "160835", Sentido: "subindo"},
+            {ID: "2093", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:12:04", Placa: "RML9044", "Confiança Placa": "0.72", Cor: "branco", "Bounding Box": "761,101,1912,760", Frame: "160844", Sentido: "descendo"},
+            {ID: "2098", Tipo: "Moto", "Hora Detecção": "2025-08-26 07:20:34", Placa: "N/D", "Confiança Placa": "N/D", Cor: "cinza", "Bounding Box": "1169,182,1907,674", Frame: "161230", Sentido: "N/D"},
+            {ID: "2109", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:25:01", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "345,37,1400,672", Frame: "161703", Sentido: "subindo"},
+            {ID: "2124", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:26:49", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "237,49,1328,702", Frame: "161705", Sentido: "subindo"},
+            {ID: "2132", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:29:01", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "386,50,1509,702", Frame: "161950", Sentido: "descendo"},
+            {ID: "2139", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:33:18", Placa: "SHN0H13", "Confiança Placa": "0.77", Cor: "branco", "Bounding Box": "1757,12,1876,339", Frame: "162979", Sentido: "descendo"},
+            {ID: "2138", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:33:25", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "369,121,1410,743", Frame: "163021", Sentido: "descendo"},
+            {ID: "2142", Tipo: "Caminhão/Caminhonete", "Hora Detecção": "2025-08-26 07:34:44", Placa: "OPN9952", "Confiança Placa": "0.98", Cor: "preto", "Bounding Box": "105,152,1239,818", Frame: "163027", Sentido: "subindo"},
+            {ID: "2145", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:38:05", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "266,305,1492,1043", Frame: "163383", Sentido: "descendo"},
+            {ID: "2148", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:38:31", Placa: "PHL7F20", "Confiança Placa": "0.63", Cor: "preto", "Bounding Box": "563,255,1715,935", Frame: "163390", Sentido: "subindo"},
+            {ID: "2150", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:39:49", Placa: "AIZ4074", "Confiança Placa": "0.70", Cor: "preto", "Bounding Box": "446,102,1468,658", Frame: "163839", Sentido: "subindo"},
+            {ID: "2154", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:42:08", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "983,14,1853,537", Frame: "164096", Sentido: "descendo"},
+            {ID: "2156", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:42:26", Placa: "FOF3089", "Confiança Placa": "0.79", Cor: "preto", "Bounding Box": "511,56,1546,652", Frame: "164106", Sentido: "subindo"},
+            {ID: "2159", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:46:45", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "344,194,1529,923", Frame: "165686", Sentido: "descendo"},
+            {ID: "2171", Tipo: "Moto", "Hora Detecção": "2025-08-26 07:50:02", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "392,186,1563,901", Frame: "165687", Sentido: "N/D"},
+            {ID: "2176", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:52:01", Placa: "N/D", "Confiança Placa": "N/D", Cor: "cinza", "Bounding Box": "533,162,1654,836", Frame: "165690", Sentido: "descendo"},
+            {ID: "2180", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:53:19", Placa: "SYA3D78", "Confiança Placa": "0.55", Cor: "preto", "Bounding Box": "775,187,1810,777", Frame: "165786", Sentido: "subindo"},
+            {ID: "2186", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:54:03", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "356,156,1812,891", Frame: "165862", Sentido: "subindo"},
+            {ID: "2194", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:54:41", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "977,157,1854,649", Frame: "166008", Sentido: "subindo"},
+            {ID: "2192", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:54:36", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "107,44,1210,794", Frame: "166210", Sentido: "subindo"},
+            {ID: "2202", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:55:29", Placa: "HJU7289", "Confiança Placa": "0.89", Cor: "preto", "Bounding Box": "205,30,1252,751", Frame: "166217", Sentido: "subindo"},
+            {ID: "2207", Tipo: "Carro", "Hora Detecção": "2025-08-26 07:56:24", Placa: "PUH3013", "Confiança Placa": "0.94", Cor: "preto", "Bounding Box": "497,27,1599,697", Frame: "167478", Sentido: "subindo"},
+            {ID: "2210", Tipo: "Moto", "Hora Detecção": "2025-08-26 08:03:30", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "461,31,1571,702", Frame: "167479", Sentido: "N/D"},
+            {ID: "2213", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:04:37", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "244,45,1461,764", Frame: "167484", Sentido: "descendo"},
+            {ID: "2216", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:05:28", Placa: "SYH3033", "Confiança Placa": "0.77", Cor: "branco", "Bounding Box": "339,244,1669,1011", Frame: "168565", Sentido: "descendo"},
+            {ID: "2221", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:08:49", Placa: "SOZ3880", "Confiança Placa": "0.63", Cor: "branco", "Bounding Box": "574,201,1807,907", Frame: "168569", Sentido: "subindo"},
+            {ID: "2224", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:10:00", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "226,39,1405,703", Frame: "169554", Sentido: "subindo"},
+            {ID: "2237", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:18:53", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "591,324,1823,1032", Frame: "169670", Sentido: "descendo"},
+            {ID: "2242", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:19:35", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "384,92,1430,682", Frame: "170233", Sentido: "subindo"},
+            {ID: "2243", Tipo: "Caminhão/Caminhonete", "Hora Detecção": "2025-08-26 08:19:39", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "157,243,1408,1036", Frame: "171005", Sentido: "subindo"},
+            {ID: "2249", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:22:58", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "434,197,1650,916", Frame: "171012", Sentido: "descendo"},
+            {ID: "2253", Tipo: "Moto", "Hora Detecção": "2025-08-26 08:24:42", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "468,189,1688,907", Frame: "171013", Sentido: "N/D"},
+            {ID: "2258", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:30:49", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "647,102,1659,679", Frame: "171812", Sentido: "subindo"},
+            {ID: "2269", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:34:24", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "608,107,1630,691", Frame: "171813", Sentido: "N/D"},
+            {ID: "2274", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:35:51", Placa: "N/D", "Confiança Placa": "N/D", Cor: "cinza", "Bounding Box": "15,282,1640,1069", Frame: "172568", Sentido: "descendo"},
+            {ID: "2282", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:39:25", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "26,282,1649,1070", Frame: "172569", Sentido: "N/D"},
+            {ID: "2283", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:43:40", Placa: "PPI9324", "Confiança Placa": "0.78", Cor: "branco", "Bounding Box": "1200,39,1895,726", Frame: "172821", Sentido: "subindo"},
+            {ID: "2293", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:45:45", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "5,407,1379,1071", Frame: "174485", Sentido: "parado"},
+            {ID: "2336", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:56:46", Placa: "EKS2339", "Confiança Placa": "0.79", Cor: "cinza", "Bounding Box": "9,411,1413,1071", Frame: "174532", Sentido: "descendo"},
+            {ID: "2337", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:56:47", Placa: "N/D", "Confiança Placa": "N/D", Cor: "azul", "Bounding Box": "9,411,1413,1071", Frame: "174532", Sentido: "parado"},
+            {ID: "2346", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:58:14", Placa: "N/D", "Confiança Placa": "N/D", Cor: "branco", "Bounding Box": "13,414,1501,1071", Frame: "174551", Sentido: "parado"},
+            {ID: "2348", Tipo: "Carro", "Hora Detecção": "2025-08-26 08:59:14", Placa: "N/D", "Confiança Placa": "N/D", Cor: "azul", "Bounding Box": "628,193,1745,856", Frame: "177436", Sentido: "subindo"},
+            {ID: "2361", Tipo: "Moto", "Hora Detecção": "2025-08-26 09:05:32", Placa: "N/D", "Confiança Placa": "N/D", Cor: "cinza", "Bounding Box": "736,187,1812,826", Frame: "177438", Sentido: "N/D"},
+            {ID: "2374", Tipo: "Carro", "Hora Detecção": "2025-08-26 09:13:50", Placa: "N/D", "Confiança Placa": "N/D", Cor: "preto", "Bounding Box": "1728,23,1875,360", Frame: "178826", Sentido: "subindo"}
+        ];
+
+        $(document).ready(function() {
+            // Função para renderizar a tabela
+            function renderTable(data) {
+                const tbody = $('#tableBody');
+                tbody.empty();
+                
+                data.forEach(vehicle => {
+                    const row = createTableRow(vehicle);
+                    tbody.append(row);
+                });
+                
+                // Atualizar estatísticas
+                updateStats(data);
+                
+                // Mostrar tabela e esconder loading
+                $('#loadingTable').hide();
+                $('#tableContainer').show();
+            }
+            
+            // Função para criar uma linha da tabela
+            function createTableRow(vehicle) {
+                const confidence = vehicle["Confiança Placa"];
+                const confidenceClass = getConfidenceClass(confidence);
+                const directionIcon = getDirectionIcon(vehicle.Sentido);
+                const vehicleTypeBadge = getVehicleTypeBadge(vehicle.Tipo);
+                const colorBadge = getColorBadge(vehicle.Cor);
+                
+                // Separar data e hora
+                const dataHora = vehicle["Hora Detecção"];
+                const [data, hora] = dataHora.split(' ');
+                const dataFormatada = formatarData(data);
+                
+                return `
+                    <tr>
+                        <td><span class="badge bg-secondary">${vehicle.ID}</span></td>
+                        <td>${vehicleTypeBadge}</td>
+                        <td>${dataFormatada}</td>
+                        <td>${hora}</td>
+                        <td>${vehicle.Placa === "N/D" ? '<span class="text-muted">N/D</span>' : `<span class="badge bg-success">${vehicle.Placa}</span>`}</td>
+                        <td>${confidence === "N/D" ? '<span class="text-muted">N/D</span>' : `<span class="badge ${confidenceClass}">${confidence}</span>`}</td>
+                        <td>${colorBadge}</td>
+                        <td><small class="text-muted">${vehicle["Bounding Box"]}</small></td>
+                        <td><small class="text-muted">${vehicle.Frame}</small></td>
+                        <td>${directionIcon} ${vehicle.Sentido}</td>
+                        <td>Rua Gurupi, 28</td>
+                    </tr>
+                `;
+            }
+            
+            // Função para obter classe de confiança
+            function getConfidenceClass(confidence) {
+                if (confidence === "N/D") return "";
+                const conf = parseFloat(confidence);
+                if (conf >= 0.8) return "confidence-high";
+                if (conf >= 0.6) return "confidence-medium";
+                return "confidence-low";
+            }
+            
+            // Função para obter ícone de direção
+            function getDirectionIcon(direction) {
+                switch(direction) {
+                    case "subindo": return '<i class="bi bi-arrow-up direction-up"></i>';
+                    case "descendo": return '<i class="bi bi-arrow-down direction-down"></i>';
+                    case "parado": return '<i class="bi bi-pause-circle direction-stopped"></i>';
+                    default: return '<span class="text-muted">N/D</span>';
+                }
+            }
+            
+            // Função para obter badge do tipo de veículo
+            function getVehicleTypeBadge(type) {
+                switch(type) {
+                    case "Carro": return '<span class="badge bg-primary badge-vehicle-type">Carro</span>';
+                    case "Moto": return '<span class="badge bg-info badge-vehicle-type">Moto</span>';
+                    case "Caminhão/Caminhonete": return '<span class="badge bg-warning badge-vehicle-type">Caminhão</span>';
+                    default: return `<span class="badge bg-secondary badge-vehicle-type">${type}</span>`;
+                }
+            }
+            
+            // Função para obter badge de cor
+            function getColorBadge(color) {
+                const colorMap = {
+                    'preto': 'bg-dark',
+                    'branco': 'bg-light text-dark',
+                    'cinza': 'bg-secondary',
+                    'vermelho': 'bg-danger',
+                    'azul': 'bg-primary'
+                };
+                return `<span class="badge ${colorMap[color] || 'bg-secondary'}">${color}</span>`;
+            }
+            
+            // Função para formatar data de YYYY-MM-DD para DD-MM-YYYY
+            function formatarData(data) {
+                const [ano, mes, dia] = data.split('-');
+                return `${dia}-${mes}-${ano}`;
+            }
+            
+            // Função para atualizar estatísticas
+            function updateStats(data) {
+                $('#totalVehicles').text(data.length);
+                
+                // Calcular média de veículos por hora
+                const firstTime = new Date(data[0]["Hora Detecção"]);
+                const lastTime = new Date(data[data.length - 1]["Hora Detecção"]);
+                const hoursDiff = (lastTime - firstTime) / (1000 * 60 * 60);
+                const avgPerHour = Math.round(data.length / hoursDiff);
+                $('#avgVehiclesPerHour').text(avgPerHour);
+                
+                // Contar placas detectadas e não detectadas
+                const placasDetectadas = data.filter(vehicle => vehicle.Placa !== "N/D").length;
+                const placasNaoDetectadas = data.filter(vehicle => vehicle.Placa === "N/D").length;
+                
+                $('#placasDetectadasCount').text(placasDetectadas);
+                $('#placasNaoDetectadasCount').text(placasNaoDetectadas);
+                
+                // Atualizar contador de registros exibidos
+                $('#registrosExibidos').text(data.length);
+                $('#totalRegistros').text(vehicleData.length);
+            }
+            
+            // Renderizar tabela inicial com filtro padrão (apenas placas detectadas)
+            const dadosIniciais = vehicleData.filter(vehicle => vehicle.Placa !== "N/D");
+            renderTable(dadosIniciais);
+            
+            // Inicializar DataTable
+            const table = $('#vehiclesTable').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+                },
+                pageLength: 25,
+                order: [[2, 'desc'], [3, 'desc']], // Ordenar por data (decrescente) e depois por hora (decrescente)
+                responsive: true,
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                columnDefs: [
+                    { targets: [7, 8], orderable: false }, // Bounding Box e Frame não ordenáveis
+                    { targets: [0, 1, 2, 3, 5, 6, 9], orderable: true }
+                ]
+            });
+            
+            // Adicionar dados filtrados ao DataTable
+            dadosIniciais.forEach(vehicle => {
+                const row = createTableRow(vehicle);
+                table.row.add($(row));
+            });
+            table.draw();
+            
+                         // Formulário de pesquisa
+             $('#searchForm').on('submit', function(e) {
+                 e.preventDefault();
+                 
+                 const data = $('#data').val();
+                 const hora = $('#hora').val();
+                 const placa = $('#placa').val().toUpperCase();
+                 const sentido = $('#sentido').val();
+                 
+                 let filteredData = vehicleData.filter(vehicle => {
+                     let match = true;
+                     
+                     if (data && vehicle["Hora Detecção"].split(' ')[0] !== data) match = false;
+                     if (hora && !vehicle["Hora Detecção"].split(' ')[1].startsWith(hora)) match = false;
+                     if (placa && vehicle.Placa !== "N/D" && !vehicle.Placa.includes(placa)) match = false;
+                     if (sentido && vehicle.Sentido !== sentido) match = false;
+                     
+                     // Filtro por status da placa
+                     const showPlacasDetectadas = $('#showPlacasDetectadas').is(':checked');
+                     const showPlacasNaoDetectadas = $('#showPlacasNaoDetectadas').is(':checked');
+                     
+                     if (vehicle.Placa === "N/D" && !showPlacasNaoDetectadas) match = false;
+                     if (vehicle.Placa !== "N/D" && !showPlacasDetectadas) match = false;
+                     
+                     return match;
+                 });
+                
+                // Limpar tabela atual
+                table.clear().draw();
+                
+                // Adicionar dados filtrados
+                filteredData.forEach(vehicle => {
+                    const row = createTableRow(vehicle);
+                    table.row.add($(row));
+                });
+                
+                table.draw();
+                
+                // Atualizar estatísticas com dados filtrados
+                updateStats(filteredData);
+            });
+            
+                         // Botão de reset
+             $('#searchForm').on('reset', function() {
+                 setTimeout(() => {
+                     // Resetar checkboxes para o estado padrão
+                     $('#showPlacasDetectadas').prop('checked', true);
+                     $('#showPlacasNaoDetectadas').prop('checked', false);
+                     
+                     renderTable(vehicleData);
+                     table.clear().draw();
+                     vehicleData.forEach(vehicle => {
+                         const row = createTableRow(vehicle);
+                         table.row.add($(row));
+                     });
+                     table.draw();
+                 }, 100);
+             });
+             
+             // Event listeners para os checkboxes de placas
+             $('#showPlacasDetectadas, #showPlacasNaoDetectadas').on('change', function() {
+                 // Verificar se pelo menos um checkbox está marcado
+                 if (!$('#showPlacasDetectadas').is(':checked') && !$('#showPlacasNaoDetectadas').is(':checked')) {
+                     // Se nenhum estiver marcado, marcar o outro
+                     if (this.id === 'showPlacasDetectadas') {
+                         $('#showPlacasNaoDetectadas').prop('checked', true);
+                     } else {
+                         $('#showPlacasDetectadas').prop('checked', true);
+                     }
+                 }
+                 
+                 // Aplicar filtros automaticamente
+                 $('#searchForm').submit();
+             });
+            
+                         // Botão de exportar
+             $('#exportBtn').on('click', function() {
+                 // Aplicar filtros atuais para exportação
+                 const data = $('#data').val();
+                 const hora = $('#hora').val();
+                 const placa = $('#placa').val().toUpperCase();
+                 const sentido = $('#sentido').val();
+                 const showPlacasDetectadas = $('#showPlacasDetectadas').is(':checked');
+                 const showPlacasNaoDetectadas = $('#showPlacasNaoDetectadas').is(':checked');
+                 
+                 let filteredData = vehicleData.filter(vehicle => {
+                     let match = true;
+                     
+                     if (data && vehicle["Hora Detecção"].split(' ')[0] !== data) match = false;
+                     if (hora && !vehicle["Hora Detecção"].split(' ')[1].startsWith(hora)) match = false;
+                     if (placa && vehicle.Placa !== "N/D" && !vehicle.Placa.includes(placa)) match = false;
+                     if (sentido && vehicle.Sentido !== sentido) match = false;
+                     
+                     // Filtro por status da placa
+                     if (vehicle.Placa === "N/D" && !showPlacasNaoDetectadas) match = false;
+                     if (vehicle.Placa !== "N/D" && !showPlacasDetectadas) match = false;
+                     
+                     return match;
+                 });
+                 
+                 const csvContent = "data:text/csv;charset=utf-8," + 
+                     "ID,Tipo,Data,Hora,Placa,Confiança Placa,Cor,Bounding Box,Frame,Sentido\n" +
+                     filteredData.map(row => {
+                         const [data, hora] = row["Hora Detecção"].split(' ');
+                         const dataFormatada = formatarData(data);
+                         return `${row.ID},${row.Tipo},"${dataFormatada}","${hora}",${row.Placa},${row["Confiança Placa"]},${row.Cor},"${row["Bounding Box"]}",${row.Frame},${row.Sentido}`;
+                     }).join("\n");
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "relatorio_veiculos.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            
+            // Botão de imprimir
+            $('#printBtn').on('click', function() {
+                window.print();
+            });
+            
+            // Atualizar timestamp do footer
+            function updateTimestamp() {
+                const now = new Date();
+                const timestamp = now.toLocaleString('pt-BR');
+                $('#lastUpdate').text(timestamp);
+            }
+            
+            updateTimestamp();
+            setInterval(updateTimestamp, 30000);
+        });
+    </script>
+</body>
+</html>
