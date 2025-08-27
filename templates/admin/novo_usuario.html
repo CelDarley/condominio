@@ -1,0 +1,185 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Novo Vigilante - SegCond Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('admin_usuarios') }}">
+                        <i class="fas fa-users me-1"></i>
+                        Usuários
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Novo Vigilante</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Novo Vigilante
+                </h1>
+                <p class="text-muted">Cadastre um novo vigilante no sistema</p>
+            </div>
+            <a href="{{ url_for('admin_usuarios') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    Informações do Vigilante
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">
+                                    <i class="fas fa-user me-1"></i>
+                                    Nome Completo <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nome" 
+                                       name="nome" 
+                                       required
+                                       placeholder="Digite o nome completo">
+                                <div class="invalid-feedback">
+                                    Por favor, digite o nome completo.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       required
+                                       placeholder="Digite o email">
+                                <div class="invalid-feedback">
+                                    Por favor, digite um email válido.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="telefone" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>
+                                    Telefone
+                                </label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="telefone" 
+                                       name="telefone" 
+                                       placeholder="Digite o telefone">
+                                <div class="form-text">
+                                    Formato sugerido: (11) 99999-9999
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="senha" class="form-label">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Senha <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="senha" 
+                                       name="senha" 
+                                       required
+                                       minlength="6"
+                                       placeholder="Digite a senha">
+                                <div class="invalid-feedback">
+                                    A senha deve ter pelo menos 6 caracteres.
+                                </div>
+                                <div class="form-text">
+                                    Mínimo de 6 caracteres
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Informação:</strong> O usuário será cadastrado como vigilante e poderá acessar o sistema móvel.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ url_for('admin_usuarios') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    Salvar Vigilante
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validação do formulário
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Máscara para telefone
+document.getElementById('telefone').addEventListener('input', function(e) {
+    var value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+        value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+        value = value.replace(/(\d{2})(\d{4})/, '($1) $2');
+        e.target.value = value;
+    }
+});
+</script>
+{% endblock %} 

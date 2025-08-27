@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 
+
 # Carregar variáveis de ambiente
 load_dotenv()
 
@@ -31,21 +32,28 @@ class Usuario(UserMixin, db.Model):
     ativo = db.Column(db.Boolean, default=True)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
 
+# Definição local do PostoTrabalho para evitar dependência circular
 class PostoTrabalho(db.Model):
     __tablename__ = 'posto_trabalho'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text)
-    endereco = db.Column(db.String(200))
     ativo = db.Column(db.Boolean, default=True)
+    
+    __table_args__ = {'extend_existing': True}
 
 class PontoBase(db.Model):
     __tablename__ = 'ponto_base'
     id = db.Column(db.Integer, primary_key=True)
+    posto_id = db.Column(db.Integer, db.ForeignKey('posto_trabalho.id'), nullable=False, default=1)
     nome = db.Column(db.String(100), nullable=False)
-    endereco = db.Column(db.String(200), nullable=False)
+    endereco = db.Column(db.String(200), nullable=False, default='')
     descricao = db.Column(db.Text)
+    horario_inicio = db.Column(db.Time, nullable=False, default='08:00:00')
+    horario_fim = db.Column(db.Time, nullable=False, default='18:00:00')
+    tempo_permanencia = db.Column(db.Integer, nullable=False, default=10)  # em minutos
     instrucoes = db.Column(db.Text)
+    ordem = db.Column(db.Integer, default=0)
     ativo = db.Column(db.Boolean, default=True)
 
 class CartaoPrograma(db.Model):
@@ -153,15 +161,22 @@ def admin_pontos_base():
 def admin_novo_ponto_base():
     if request.method == 'POST':
         nome = request.form.get('nome')
-        endereco = request.form.get('endereco')
+        endereco = request.form.get('endereco', '')
         descricao = request.form.get('descricao')
         instrucoes = request.form.get('instrucoes')
+        horario_inicio = request.form.get('horario_inicio', '08:00')
+        horario_fim = request.form.get('horario_fim', '18:00')
+        tempo_permanencia = int(request.form.get('tempo_permanencia', 10))
         
         novo_ponto = PontoBase(
+            posto_id=1,  # Usando o posto padrão
             nome=nome,
             endereco=endereco,
             descricao=descricao,
-            instrucoes=instrucoes
+            instrucoes=instrucoes,
+            horario_inicio=horario_inicio,
+            horario_fim=horario_fim,
+            tempo_permanencia=tempo_permanencia
         )
         
         db.session.add(novo_ponto)
@@ -434,10 +449,10 @@ if __name__ == '__main__':
         db.create_all()
     
     host = os.getenv('ADMIN_HOST', '0.0.0.0')
-    port = int(os.getenv('ADMIN_PORT', 5002))
-    debug = os.getenv('ADMIN_DEBUG', 'True').lower() == 'true'
+    port = int(os.getenv('ADMIN_PORT', 5010))
+    debug = os.getenv('ADMIN_DEBUG', 'False').lower() == 'true'
     
     print(f"🚀 SegCond Admin iniciando em http://{host}:{port}")
     print(f"📱 Acesse: http://localhost:{port}/admin")
     
-    app.run(debug=debug, host=host, port=port)
+    app.run(debug=debug, host=host, port=port, threaded=True)

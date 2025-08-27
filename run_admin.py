@@ -50,7 +50,7 @@ def main():
         sys.exit(1)
     
     # Verificar se a porta está livre
-    admin_port = int(os.getenv('ADMIN_PORT', 5002))
+    admin_port = int(os.getenv('ADMIN_PORT', 5010))
     try:
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
