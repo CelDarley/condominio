@@ -25,7 +25,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <p class="mb-1"><strong>Descrição:</strong> {{ $posto->descricao ?? 'Sem descrição' }}</p>
-                        <p class="mb-1"><strong>Status:</strong> 
+                        <p class="mb-1"><strong>Status:</strong>
                             <span class="badge badge-{{ $posto->ativo ? 'success' : 'secondary' }}">
                                 {{ $posto->ativo ? 'Ativo' : 'Inativo' }}
                             </span>
@@ -48,25 +48,23 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-route"></i> Pontos Base do Itinerário
+                    <i class="fas fa-map-pin"></i> Pontos Base do Posto
                 </h6>
             </div>
             <div class="card-body">
-                @if($pontos->count() > 0)
+                                @if($pontos->count() > 0)
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Itinerário de Vigilância:</strong> Os pontos base definem o percurso que o vigilante deve seguir durante sua ronda neste posto.
+                        <strong>Pontos Base:</strong> Os pontos base definem os locais físicos onde o vigilante deve fazer verificações durante sua ronda neste posto.
                     </div>
 
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th style="width: 60px;">Ordem</th>
                                     <th>Nome do Ponto</th>
                                     <th>Endereço</th>
-                                    <th>Tempo Permanência</th>
-                                    <th>Tempo Deslocamento</th>
+                                    <th>Descrição</th>
                                     <th>Status</th>
                                     <th style="width: 120px;">Ações</th>
                                 </tr>
@@ -74,11 +72,6 @@
                             <tbody id="pontos-sortable">
                                 @foreach($pontos as $ponto)
                                 <tr data-id="{{ $ponto->id }}">
-                                    <td>
-                                        <span class="badge badge-primary badge-lg">
-                                            {{ $ponto->ordem }}º
-                                        </span>
-                                    </td>
                                     <td>
                                         <strong>{{ $ponto->nome }}</strong>
                                         @if($ponto->descricao)
@@ -91,13 +84,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-clock"></i> {{ $ponto->tempo_permanencia ?? 10 }}min
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-warning">
-                                            <i class="fas fa-route"></i> {{ $ponto->tempo_deslocamento ?? 5 }}min
+                                        <span class="text-muted">
+                                            {{ Str::limit($ponto->descricao ?? 'Sem descrição', 50) }}
                                         </span>
                                     </td>
                                     <td>
@@ -107,17 +95,17 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <button class="btn btn-info btn-sm" 
+                                            <button class="btn btn-info btn-sm"
                                                     title="Ver Detalhes"
                                                     onclick="mostrarDetalhes({{ $ponto->id }})">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-warning btn-sm" 
+                                            <button class="btn btn-warning btn-sm"
                                                     title="Editar"
                                                     onclick="editarPonto({{ $ponto->id }})">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn btn-danger btn-sm" 
+                                            <button class="btn btn-danger btn-sm"
                                                     title="Excluir"
                                                     onclick="excluirPonto({{ $ponto->id }}, '{{ $ponto->nome }}')">
                                                 <i class="fas fa-trash"></i>
@@ -133,27 +121,20 @@
                     <!-- Resumo do Itinerário -->
                     <div class="mt-4">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="card border-left-primary">
                                     <div class="card-body">
                                         <h6 class="text-primary">
-                                            <i class="fas fa-clock"></i> Tempo Total do Itinerário
+                                            <i class="fas fa-map-marked-alt"></i> Resumo do Itinerário
                                         </h6>
-                                        @php
-                                            $tempoTotal = $pontos->sum(function($ponto) {
-                                                return ($ponto->tempo_permanencia ?? 10) + ($ponto->tempo_deslocamento ?? 5);
-                                            });
-                                            $horas = floor($tempoTotal / 60);
-                                            $minutos = $tempoTotal % 60;
-                                        @endphp
                                         <div class="h4 mb-0 font-weight-bold text-primary-custom">
-                                            {{ $horas }}h {{ $minutos }}min
+                                            {{ $pontos->count() }} Pontos Base
                                         </div>
-                                        <small class="text-muted">Tempo estimado para uma ronda completa</small>
+                                        <small class="text-muted">Total de pontos na sequência de vigilância</small>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="card border-left-info">
                                     <div class="card-body">
                                         <h6 class="text-info">
@@ -161,24 +142,9 @@
                                         </h6>
                                         <ul class="mb-0 small">
                                             <li><strong>Total de Pontos:</strong> {{ $pontos->count() }}</li>
-                                            <li><strong>Tempo Permanência:</strong> {{ $pontos->sum('tempo_permanencia') }}min</li>
-                                            <li><strong>Tempo Deslocamento:</strong> {{ $pontos->sum('tempo_deslocamento') }}min</li>
                                             <li><strong>Pontos Ativos:</strong> {{ $pontos->where('ativo', true)->count() }}</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card border-left-warning">
-                                    <div class="card-body">
-                                        <h6 class="text-warning">
-                                            <i class="fas fa-exclamation-triangle"></i> Orientações
-                                        </h6>
-                                        <ul class="mb-0 small">
-                                            <li>Mantenha 3-5 pontos base por posto</li>
-                                            <li>Defina tempos realistas</li>
-                                            <li>Considere distâncias reais</li>
-                                            <li>Teste antes de ativar</li>
+                                            <li><strong>Pontos Inativos:</strong> {{ $pontos->where('ativo', false)->count() }}</li>
+                                            <li><strong>Com Coordenadas GPS:</strong> {{ $pontos->whereNotNull('latitude')->whereNotNull('longitude')->count() }}</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -235,60 +201,58 @@ function mostrarDetalhes(pontoId) {
     // Buscar dados do ponto base e mostrar detalhes
     const pontos = @json($pontos);
     const ponto = pontos.find(p => p.id === pontoId);
-    
+
     if (ponto) {
         pontoAtualId = pontoId; // Armazenar ID para edição
-        
+
         const detalhes = `
             <div class="row">
                 <div class="col-md-6">
                     <p><strong>Nome:</strong> ${ponto.nome}</p>
                     <p><strong>Endereço:</strong> ${ponto.endereco || 'Não informado'}</p>
-                    <p><strong>Ordem na Sequência:</strong> ${ponto.ordem}º</p>
                     <p><strong>Status:</strong> <span class="badge badge-${ponto.ativo ? 'success' : 'secondary'}">${ponto.ativo ? 'Ativo' : 'Inativo'}</span></p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Tempo de Permanência:</strong> <span class="badge badge-info">${ponto.tempo_permanencia || 10} minutos</span></p>
-                    <p><strong>Tempo de Deslocamento:</strong> <span class="badge badge-warning">${ponto.tempo_deslocamento || 5} minutos</span></p>
-                    <p><strong>Horário de Funcionamento:</strong> ${ponto.horario_inicio || '08:00'} - ${ponto.horario_fim || '18:00'}</p>
-                    <p><strong>Tempo Total:</strong> <span class="badge badge-primary">${(ponto.tempo_permanencia || 10) + (ponto.tempo_deslocamento || 5)} min</span></p>
+                    <p><strong>Coordenadas GPS:</strong>
+                        ${ponto.latitude && ponto.longitude ? `${ponto.latitude}, ${ponto.longitude}` : 'Não informadas'}
+                    </p>
+                    <p><strong>Status:</strong> <span class="badge badge-${ponto.ativo ? 'success' : 'secondary'}">${ponto.ativo ? 'Ativo' : 'Inativo'}</span></p>
                 </div>
             </div>
             <hr>
             ${ponto.descricao ? `<div class="mb-2"><strong>Descrição:</strong><br><span class="text-muted">${ponto.descricao}</span></div>` : ''}
-            ${ponto.instrucoes ? `<div class="mb-2"><strong>Instruções para o Vigilante:</strong><br><span class="text-muted">${ponto.instrucoes}</span></div>` : ''}
         `;
-        
+
         document.getElementById('pontoNome').textContent = ponto.nome;
         document.getElementById('qrCodeContainer').innerHTML = detalhes;
         document.getElementById('qrCodeText').textContent = '';
-        
+
         new bootstrap.Modal(document.getElementById('qrCodeModal')).show();
     }
 }
 
 function editarPonto(id) {
     // Redirecionar para página de edição
-    window.location.href = `/admin/postos/{{ $posto->id }}/pontos-base/${id}/edit`;
+    window.location.href = `{{ route('admin.postos.pontos-base.edit', ['posto' => $posto->id, 'ponto' => '__ID__']) }}`.replace('__ID__', id);
 }
 
 function excluirPonto(id, nome) {
-    if (confirm(`Tem certeza que deseja excluir o ponto base "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+    if (confirm(`Tem certeza que deseja desativar o ponto base "${nome}"?\n\nEsta ação irá desativar o ponto base, mas ele não será excluído permanentemente.`)) {
         // Criar form e submeter
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/admin/postos/{{ $posto->id }}/pontos-base/${id}`;
-        
+        form.action = `{{ route('admin.postos.pontos-base.destroy', ['posto' => $posto->id, 'ponto' => '__ID__']) }}`.replace('__ID__', id);
+
         const methodInput = document.createElement('input');
         methodInput.type = 'hidden';
         methodInput.name = '_method';
         methodInput.value = 'DELETE';
-        
+
         const tokenInput = document.createElement('input');
         tokenInput.type = 'hidden';
         tokenInput.name = '_token';
         tokenInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
+
         form.appendChild(methodInput);
         form.appendChild(tokenInput);
         document.body.appendChild(form);
@@ -336,4 +300,4 @@ function editarPontoAtual() {
     font-size: 0.875rem;
 }
 </style>
-@endsection 
+@endsection

@@ -7,7 +7,7 @@
     <title>@yield("title", "RBX-Security Admin")</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+
     <!-- CSS Customizado com Paleta de Cores -->
     <link href="{{ asset('css/admin-custom.css') }}" rel="stylesheet">
 </head>
@@ -46,12 +46,7 @@
                                 Escalas
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="javascript:void(0)" onclick="alert('Itinerários em desenvolvimento')">
-                                <i class="fas fa-route me-2"></i>
-                                Itinerários
-                            </a>
-                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is("admin/cartoes-programa*") ? "active" : "" }}" href="{{ route("admin.cartoes-programa.index") }}">
                                 <i class="fas fa-id-card me-2"></i>
@@ -119,15 +114,15 @@
     <script>
         // Debug para verificar se JavaScript está funcionando
         console.log('JavaScript carregado corretamente');
-        
+
         // Verificar se Bootstrap está funcionando
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM carregado');
-            
+
             // Testar dropdowns
             var dropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
             console.log('Dropdowns encontrados:', dropdowns.length);
-            
+
             // Adicionar event listeners para links
             var navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(function(link) {
@@ -136,17 +131,17 @@
                 });
             });
         });
-        
+
         // Função para testar alerts
         function testAlert() {
             alert('Teste de JavaScript funcionando!');
         }
     </script>
-    
+
     <!-- Scripts necessários -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     @stack("scripts")
 </body>
 </html>

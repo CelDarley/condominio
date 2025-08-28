@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+import bcrypt
 
 load_dotenv()
 
@@ -23,6 +24,34 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'index'
+
+def check_password_compatible(hashed_password, password):
+    """Verifica senha compatível com diferentes tipos de hash"""
+    if not hashed_password or len(hashed_password.strip()) == 0:
+        return False
+    
+    # Tentar verificar com Werkzeug primeiro
+    try:
+        if check_password_hash(hashed_password, password):
+            return True
+    except ValueError:
+        pass
+    
+    # Tentar verificar com bcrypt
+    try:
+        if hashed_password.startswith('$2y$') or hashed_password.startswith('$2b$'):
+            # Converter hash bcrypt para formato compatível
+            if hashed_password.startswith('$2y$'):
+                # Laravel usa $2y$, converter para $2b$ (bcrypt padrão)
+                bcrypt_hash = hashed_password.replace('$2y$', '$2b$', 1)
+            else:
+                bcrypt_hash = hashed_password
+            
+            return bcrypt.checkpw(password.encode('utf-8'), bcrypt_hash.encode('utf-8'))
+    except Exception:
+        pass
+    
+    return False
 
 # Modelos do banco de dados
 class Usuario(UserMixin, db.Model):
@@ -51,7 +80,7 @@ class CartaoPrograma(db.Model):
     horario_fim = db.Column(db.Time, nullable=False)
     tempo_total_estimado = db.Column(db.Integer, default=0)
     ativo = db.Column(db.Boolean, default=True)
-    configuracoes = db.Column(db.Text)  # JSON
+    configuracoes = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -79,14 +108,13 @@ class PontoBase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     posto_id = db.Column(db.Integer, db.ForeignKey('posto_trabalho.id'), nullable=False)
     nome = db.Column(db.String(100), nullable=False)
+    endereco = db.Column(db.String(255), nullable=False)
     descricao = db.Column(db.Text)
-    horario_inicio = db.Column(db.Time, nullable=False)
-    horario_fim = db.Column(db.Time, nullable=False)
-    tempo_permanencia = db.Column(db.Integer, nullable=False)
-    instrucoes = db.Column(db.Text)
-    ordem = db.Column(db.Integer)
-    endereco = db.Column(db.String(200), nullable=False, default='')
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    qr_code = db.Column(db.String(100))
     ativo = db.Column(db.Boolean, default=True)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
 
 class CartaoProgramaPonto(db.Model):
     __tablename__ = 'cartao_programa_pontos'
@@ -153,16 +181,11 @@ def index():
         
         # Verificar se o usuário existe e tem senha válida
         if usuario and usuario.senha_hash and len(usuario.senha_hash.strip()) > 0:
-            try:
-                if check_password_hash(usuario.senha_hash, senha):
-                    login_user(usuario)
-                    return redirect(url_for('home'))
-                else:
-                    flash('Email ou senha inválidos')
-            except ValueError as e:
-                # Hash inválido - log do erro para debug
-                print(f"Erro no hash da senha para usuário {usuario.email}: {e}")
-                flash('Erro na autenticação. Contate o administrador.')
+            if check_password_compatible(usuario.senha_hash, senha):
+                login_user(usuario)
+                return redirect(url_for('home'))
+            else:
+                flash('Email ou senha inválidos')
         else:
             flash('Email ou senha inválidos')
     
@@ -256,24 +279,81 @@ def posto(posto_id):
         for ponto_programa in pontos_programa:
             ponto_base = PontoBase.query.get(ponto_programa.ponto_base_id)
             if ponto_base:
-                # Adicionar informações do cartão programa ao ponto
-                ponto_base.tempo_permanencia = ponto_programa.tempo_permanencia
-                ponto_base.tempo_deslocamento = ponto_programa.tempo_deslocamento
-                ponto_base.instrucoes_especificas = ponto_programa.instrucoes_especificas
-                ponto_base.obrigatorio = ponto_programa.obrigatorio
-                ponto_base.ordem = ponto_programa.ordem
-                pontos_base.append(ponto_base)
+                # Criar um dicionário com as informações do ponto base e do cartão programa
+                ponto_info = {
+                    'id': ponto_base.id,
+                    'nome': ponto_base.nome,
+                    'endereco': ponto_base.endereco,
+                    'descricao': ponto_base.descricao,
+                    'latitude': ponto_base.latitude,
+                    'longitude': ponto_base.longitude,
+                    'ativo': ponto_base.ativo,
+                    'tempo_permanencia': ponto_programa.tempo_permanencia,
+                    'tempo_deslocamento': ponto_programa.tempo_deslocamento,
+                    'instrucoes_especificas': ponto_programa.instrucoes_especificas,
+                    'obrigatorio': ponto_programa.obrigatorio,
+                    'ordem': ponto_programa.ordem
+                }
+                pontos_base.append(ponto_info)
     else:
-        # Fallback: usar pontos do posto (modelo antigo)
-        pontos_base = PontoBase.query.filter_by(posto_id=posto_id).all()
-        cartao_programa = None
+        # Se não há escala ativa para hoje, verificar se há cartões programa para este posto
+        cartoes_programa = CartaoPrograma.query.filter_by(posto_trabalho_id=posto_id, ativo=True).all()
+        
+        if cartoes_programa:
+            # Usar o primeiro cartão programa ativo do posto
+            cartao_programa = cartoes_programa[0]
+            pontos_programa = CartaoProgramaPonto.query.filter_by(
+                cartao_programa_id=cartao_programa.id
+            ).order_by(CartaoProgramaPonto.ordem).all()
+            
+            pontos_base = []
+            for ponto_programa in pontos_programa:
+                ponto_base = PontoBase.query.get(ponto_programa.ponto_base_id)
+                if ponto_base:
+                    # Criar um dicionário com as informações do ponto base e do cartão programa
+                    ponto_info = {
+                        'id': ponto_base.id,
+                        'nome': ponto_base.nome,
+                        'endereco': ponto_base.endereco,
+                        'descricao': ponto_base.descricao,
+                        'latitude': ponto_base.latitude,
+                        'longitude': ponto_base.longitude,
+                        'ativo': ponto_base.ativo,
+                        'tempo_permanencia': ponto_programa.tempo_permanencia,
+                        'tempo_deslocamento': ponto_programa.tempo_deslocamento,
+                        'instrucoes_especificas': ponto_programa.instrucoes_especificas,
+                        'obrigatorio': ponto_programa.obrigatorio,
+                        'ordem': ponto_programa.ordem
+                    }
+                    pontos_base.append(ponto_info)
+        else:
+            # Fallback: usar pontos do posto (modelo antigo)
+            pontos_base_raw = PontoBase.query.filter_by(posto_id=posto_id).all()
+            pontos_base = []
+            for ponto in pontos_base_raw:
+                ponto_info = {
+                    'id': ponto.id,
+                    'nome': ponto.nome,
+                    'endereco': ponto.endereco,
+                    'descricao': ponto.descricao,
+                    'latitude': ponto.latitude,
+                    'longitude': ponto.longitude,
+                    'ativo': ponto.ativo,
+                    'tempo_permanencia': 10,  # valor padrão
+                    'tempo_deslocamento': 5,   # valor padrão
+                    'instrucoes_especificas': '',
+                    'obrigatorio': True,
+                    'ordem': len(pontos_base) + 1
+                }
+                pontos_base.append(ponto_info)
+            cartao_programa = None
     
     # Buscar itinerários (mantido para compatibilidade)
     itinerarios = []
     for i in range(len(pontos_base) - 1):
         itinerario = Itinerario.query.filter_by(
-            ponto_origem_id=pontos_base[i].id,
-            ponto_destino_id=pontos_base[i + 1].id
+            ponto_origem_id=pontos_base[i]['id'],
+            ponto_destino_id=pontos_base[i + 1]['id']
         ).first()
         if itinerario:
             itinerarios.append(itinerario)
@@ -299,12 +379,30 @@ def registrar_presenca(ponto_id):
         )
         db.session.add(novo_registro)
         db.session.commit()
-        return jsonify({'status': 'chegada', 'message': 'Presença registrada com sucesso'})
+        
+        # Formatar data e hora da chegada
+        chegada_formatada = novo_registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
+        
+        return jsonify({
+            'status': 'chegada', 
+            'message': 'Presença registrada com sucesso',
+            'timestamp_chegada': chegada_formatada
+        })
     else:
         # Registrar saída
         registro.timestamp_saida = datetime.utcnow()
         db.session.commit()
-        return jsonify({'status': 'saida', 'message': 'Saída registrada com sucesso'})
+        
+        # Formatar data e hora da saída
+        chegada_formatada = registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
+        saida_formatada = registro.timestamp_saida.strftime('%d/%m/%Y %H:%M:%S')
+        
+        return jsonify({
+            'status': 'saida', 
+            'message': 'Saída registrada com sucesso',
+            'timestamp_chegada': chegada_formatada,
+            'timestamp_saida': saida_formatada
+        })
 
 @app.route('/enviar_aviso', methods=['POST'])
 @login_required

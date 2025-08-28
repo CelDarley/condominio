@@ -31,12 +31,17 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     // Gerenciamento de Usuários
     Route::resource('usuarios', UsuarioController::class);
     Route::post('usuarios/{usuario}/toggle-status', [UsuarioController::class, 'toggleStatus'])->name('usuarios.toggle-status');
+    Route::post('usuarios/{usuario}/deactivate', [UsuarioController::class, 'deactivate'])->name('usuarios.deactivate');
+    Route::delete('usuarios/{usuario}/force-delete', [UsuarioController::class, 'forceDelete'])->name('usuarios.force-delete');
 
     // Gerenciamento de Postos de Trabalho
     Route::resource('postos', PostoTrabalhoController::class);
     Route::get('postos/{posto}/pontos-base', [PostoTrabalhoController::class, 'pontosBase'])->name('postos.pontos-base');
     Route::get('postos/{posto}/pontos-base/create', [PostoTrabalhoController::class, 'createPontoBase'])->name('postos.pontos-base.create');
     Route::post('postos/{posto}/pontos-base', [PostoTrabalhoController::class, 'storePontoBase'])->name('postos.pontos-base.store');
+    Route::get('postos/{posto}/pontos-base/{ponto}/edit', [PostoTrabalhoController::class, 'editPontoBase'])->name('postos.pontos-base.edit');
+    Route::put('postos/{posto}/pontos-base/{ponto}', [PostoTrabalhoController::class, 'updatePontoBase'])->name('postos.pontos-base.update');
+    Route::delete('postos/{posto}/pontos-base/{ponto}', [PostoTrabalhoController::class, 'destroyPontoBase'])->name('postos.pontos-base.destroy');
     
     // Gerenciamento de Escalas
     Route::resource('escalas', EscalaController::class);

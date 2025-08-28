@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PontoBase extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'ponto_base';
     protected $primaryKey = 'id';
     public $timestamps = false;
@@ -21,7 +21,6 @@ class PontoBase extends Model
         'nome',
         'endereco',
         'descricao',
-        'instrucoes',
         'latitude',
         'longitude',
         'qr_code',
@@ -69,18 +68,18 @@ class PontoBase extends Model
             $this->qr_code = 'QR_' . $this->id . '_' . uniqid();
             $this->save();
         }
-        
+
         return $this->qr_code;
     }
 
     public function getLocalizacaoCompleta(): string
     {
         $endereco = $this->endereco;
-        
+
         if ($this->latitude && $this->longitude) {
             $endereco .= " (GPS: {$this->latitude}, {$this->longitude})";
         }
-        
+
         return $endereco;
     }
 

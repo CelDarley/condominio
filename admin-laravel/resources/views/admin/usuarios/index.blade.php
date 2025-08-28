@@ -55,14 +55,38 @@
                                             <a href="{{ route('admin.usuarios.edit', $usuario) }}" class="btn btn-warning btn-sm" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form method="POST" action="{{ route('admin.usuarios.toggle-status', $usuario) }}" style="display: inline;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-{{ $usuario->ativo ? 'secondary' : 'success' }} btn-sm" 
-                                                        title="{{ $usuario->ativo ? 'Desativar' : 'Ativar' }}"
-                                                        onclick="return confirm('Tem certeza que deseja {{ $usuario->ativo ? 'desativar' : 'ativar' }} este usuário?')">
-                                                    <i class="fas fa-{{ $usuario->ativo ? 'ban' : 'check' }}"></i>
-                                                </button>
-                                            </form>
+                                            @if($usuario->ativo)
+                                                <!-- Botão para desativar -->
+                                                <form method="POST" action="{{ route('admin.usuarios.deactivate', $usuario) }}" style="display: inline;">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-secondary btn-sm"
+                                                            title="Desativar usuário"
+                                                            onclick="return confirm('Tem certeza que deseja desativar este usuário?')">
+                                                        <i class="fas fa-ban"></i>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <!-- Botão para ativar -->
+                                                <form method="POST" action="{{ route('admin.usuarios.toggle-status', $usuario) }}" style="display: inline;">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-success btn-sm"
+                                                            title="Ativar usuário"
+                                                            onclick="return confirm('Tem certeza que deseja ativar este usuário?')">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+
+                                                <!-- Botão para exclusão permanente -->
+                                                <form method="POST" action="{{ route('admin.usuarios.force-delete', $usuario) }}" style="display: inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm"
+                                                            title="Excluir permanentemente"
+                                                            onclick="return confirm('ATENÇÃO: Esta ação é irreversível! O usuário será excluído permanentemente do banco de dados. Tem certeza?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -83,4 +107,4 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection

@@ -29,12 +29,35 @@ class UsuarioController extends Controller
     {
         $request->validate([
             'nome' => 'required|string|max:100',
-            'email' => 'required|email|unique:usuario,email|max:120',
+            'email' => 'required|email|max:120',
             'telefone' => 'nullable|string|max:20',
             'senha' => 'required|string|min:6',
             'tipo' => 'required|in:vigilante,morador'
         ]);
 
+        // Verificar se o email já existe em usuários ativos
+        $existingUser = Usuario::where('email', $request->email)->where('ativo', true)->first();
+        if ($existingUser) {
+            return back()->withErrors(['email' => 'Este email já está em uso por um usuário ativo.'])->withInput();
+        }
+
+        // Se existir usuário inativo com este email, reativar e atualizar
+        $inactiveUser = Usuario::where('email', $request->email)->where('ativo', false)->first();
+        if ($inactiveUser) {
+            $inactiveUser->update([
+                'nome' => $request->nome,
+                'telefone' => $request->telefone,
+                'senha_hash' => Hash::make($request->senha),
+                'tipo' => $request->tipo,
+                'ativo' => true,
+                'data_atualizacao' => now()
+            ]);
+
+            return redirect()->route('admin.usuarios.index')
+                ->with('success', 'Usuário reativado e atualizado com sucesso!');
+        }
+
+        // Criar novo usuário
         Usuario::create([
             'nome' => $request->nome,
             'email' => $request->email,
@@ -88,6 +111,30 @@ class UsuarioController extends Controller
     }
 
     public function destroy(Usuario $usuario)
+    {
+        // Soft delete - apenas desativa o usuário
+        $usuario->update(['ativo' => false]);
+
+        return redirect()->route('admin.usuarios.index')
+            ->with('success', 'Usuário desativado com sucesso!');
+    }
+
+    public function forceDelete(Usuario $usuario)
+    {
+        // Verificar se o usuário tem relacionamentos
+        if ($usuario->escalas()->count() > 0) {
+            return redirect()->route('admin.usuarios.index')
+                ->with('error', 'Não é possível excluir usuário que possui escalas associadas. Desative-o primeiro.');
+        }
+
+        // Exclusão permanente
+        $usuario->delete();
+
+        return redirect()->route('admin.usuarios.index')
+            ->with('success', 'Usuário excluído permanentemente com sucesso!');
+    }
+
+    public function deactivate(Usuario $usuario)
     {
         // Soft delete - apenas desativa o usuário
         $usuario->update(['ativo' => false]);

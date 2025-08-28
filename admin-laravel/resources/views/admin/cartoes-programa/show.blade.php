@@ -110,10 +110,18 @@
                             <i class="fas fa-clock"></i> {{ $tempoTotalItinerario }} min total
                         </span>
                     @endif
+                    <button type="button" class="btn btn-success btn-sm ml-2" id="btn-salvar-ordem" style="display: none;">
+                        <i class="fas fa-save"></i> Salvar Nova Ordem
+                    </button>
                 </div>
             </div>
             <div class="card-body">
                 @if($cartaoPrograma->cartaoProgramaPontos->count() > 0)
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dica:</strong> Você pode reordenar os pontos base arrastando e soltando as linhas da tabela. 
+                        Use o ícone <i class="fas fa-grip-vertical"></i> para arrastar. Clique em "Salvar Nova Ordem" após fazer as alterações.
+                    </div>
                     @if($tempoTotalItinerario > 0)
                         <div class="row mb-3">
                             <div class="col-md-4">
@@ -158,11 +166,12 @@
                                     <th width="100">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="pontos-sortable">
                                 @foreach($cartaoPrograma->cartaoProgramaPontos->sortBy('ordem') as $ponto)
-                                <tr>
+                                <tr data-id="{{ $ponto->id }}" data-ordem="{{ $ponto->ordem }}" class="ponto-item">
                                     <td>
                                         <span class="badge badge-primary">{{ $ponto->ordem }}</span>
+                                        <i class="fas fa-grip-vertical text-muted ml-1" style="cursor: grab;"></i>
                                     </td>
                                     <td>
                                         <strong>{{ $ponto->pontoBase->nome ?? 'Ponto removido' }}</strong>
@@ -710,7 +719,217 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Validação da edição passou, enviando formulário...');
         });
     }
+    
+    // Implementar funcionalidade de arrastar e soltar para reordenar pontos
+    implementarDragAndDrop();
 });
+
+// Função para implementar arrastar e soltar
+function implementarDragAndDrop() {
+    const tbody = document.getElementById('pontos-sortable');
+    const btnSalvar = document.getElementById('btn-salvar-ordem');
+    let draggedElement = null;
+    let originalOrder = [];
+    
+    if (!tbody || !btnSalvar) return;
+    
+    // Armazenar ordem original
+    function armazenarOrdemOriginal() {
+        originalOrder = Array.from(tbody.querySelectorAll('tr')).map(tr => ({
+            id: tr.dataset.id,
+            ordem: parseInt(tr.dataset.ordem)
+        }));
+    }
+    
+    // Atualizar números de ordem na interface
+    function atualizarNumerosOrdem() {
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            const badge = row.querySelector('.badge-primary');
+            if (badge) {
+                badge.textContent = index + 1;
+            }
+            row.dataset.ordem = index + 1;
+        });
+    }
+    
+    // Mostrar botão de salvar quando houver mudanças
+    function mostrarBotaoSalvar() {
+        btnSalvar.style.display = 'inline-block';
+        btnSalvar.classList.add('btn-warning');
+        btnSalvar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Salvar Nova Ordem';
+    }
+    
+    // Verificar se houve mudanças na ordem
+    function verificarMudancas() {
+        const novaOrdem = Array.from(tbody.querySelectorAll('tr')).map(tr => ({
+            id: tr.dataset.id,
+            ordem: parseInt(tr.dataset.ordem)
+        }));
+        
+        const mudou = JSON.stringify(originalOrder) !== JSON.stringify(novaOrdem);
+        
+        if (mudou) {
+            mostrarBotaoSalvar();
+        } else {
+            btnSalvar.style.display = 'none';
+        }
+        
+        return mudou;
+    }
+    
+    // Configurar eventos de arrastar e soltar
+    tbody.querySelectorAll('tr').forEach(row => {
+        row.draggable = true;
+        
+        row.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        });
+        
+        row.addEventListener('dragend', function(e) {
+            this.style.opacity = '1';
+            draggedElement = null;
+        });
+        
+        row.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+        
+        row.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            if (this !== draggedElement) {
+                this.style.borderTop = '2px solid #007bff';
+            }
+        });
+        
+        row.addEventListener('dragleave', function(e) {
+            this.style.borderTop = '';
+        });
+        
+        row.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderTop = '';
+            
+            if (draggedElement && this !== draggedElement) {
+                const allRows = Array.from(tbody.querySelectorAll('tr'));
+                const draggedIndex = allRows.indexOf(draggedElement);
+                const dropIndex = allRows.indexOf(this);
+                
+                if (draggedIndex < dropIndex) {
+                    tbody.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    tbody.insertBefore(draggedElement, this);
+                }
+                
+                atualizarNumerosOrdem();
+                verificarMudancas();
+            }
+        });
+    });
+    
+    // Evento de clique no botão salvar
+    btnSalvar.addEventListener('click', function() {
+        const novaOrdem = Array.from(tbody.querySelectorAll('tr')).map((row, index) => ({
+            id: row.dataset.id,
+            nova_ordem: index + 1
+        }));
+        
+        // Mostrar loading
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        
+        // Enviar nova ordem para o servidor
+        fetch(`{{ route('admin.cartoes-programa.reordenar-pontos', $cartaoPrograma) }}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ pontos: novaOrdem })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Atualizar ordem original
+                armazenarOrdemOriginal();
+                
+                // Mostrar sucesso
+                this.classList.remove('btn-warning');
+                this.classList.add('btn-success');
+                this.innerHTML = '<i class="fas fa-check"></i> Ordem Salva!';
+                
+                // Esconder botão após 2 segundos
+                setTimeout(() => {
+                    this.style.display = 'none';
+                }, 2000);
+                
+                // Mostrar mensagem de sucesso
+                mostrarMensagem('Ordem dos pontos base atualizada com sucesso!', 'success');
+            } else {
+                throw new Error(data.message || 'Erro ao salvar ordem');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao salvar ordem:', error);
+            
+            // Restaurar ordem original
+            restaurarOrdemOriginal();
+            
+            // Mostrar erro
+            this.classList.remove('btn-warning');
+            this.classList.add('btn-danger');
+            this.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Erro!';
+            
+            // Restaurar botão após 2 segundos
+            setTimeout(() => {
+                this.classList.remove('btn-danger');
+                this.classList.add('btn-warning');
+                this.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Salvar Nova Ordem';
+            }, 2000);
+            
+            mostrarMensagem('Erro ao salvar ordem. Tente novamente.', 'danger');
+        });
+    });
+    
+    // Função para restaurar ordem original
+    function restaurarOrdemOriginal() {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rowsOrdenados = originalOrder.map(item => 
+            rows.find(row => row.dataset.id == item.id)
+        ).filter(Boolean);
+        
+        rowsOrdenados.forEach(row => tbody.appendChild(row));
+        atualizarNumerosOrdem();
+        btnSalvar.style.display = 'none';
+    }
+    
+    // Função para mostrar mensagens
+    function mostrarMensagem(texto, tipo) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${texto}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.container-fluid');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Inicializar
+    armazenarOrdemOriginal();
+}
 </script>
 
 <style>
@@ -725,6 +944,52 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .border-left-info {
     border-left: 0.25rem solid #36b9cc !important;
+}
+
+/* Estilos para arrastar e soltar */
+.ponto-item {
+    transition: all 0.2s ease;
+}
+
+.ponto-item:hover {
+    background-color: #f8f9fa;
+}
+
+.ponto-item[draggable="true"] {
+    cursor: grab;
+}
+
+.ponto-item[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.ponto-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.ponto-item.drag-over {
+    border-top: 2px solid #007bff !important;
+}
+
+/* Estilos para o botão de salvar ordem */
+#btn-salvar-ordem {
+    transition: all 0.3s ease;
+}
+
+#btn-salvar-ordem:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Animação de loading */
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>
 @endsection 

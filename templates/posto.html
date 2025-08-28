@@ -56,6 +56,9 @@
                             <i class="fas fa-clock"></i>
                             <span>Pendente</span>
                         </div>
+                        <div class="ponto-timestamp" id="timestamp-{{ ponto.id }}" style="display: none;">
+                            <small class="text-muted"></small>
+                        </div>
                     </div>
                     
                     <div class="ponto-details">
@@ -63,35 +66,31 @@
                             {% if cartao_programa %}
                             <div class="time-item">
                                 <i class="fas fa-hourglass-half"></i>
-                                <span>Permanência: {{ ponto.tempo_permanencia }} min</span>
+                                <span><strong>Tempo de Permanência:</strong> {{ ponto.tempo_permanencia }} min</span>
                             </div>
                             {% if ponto.tempo_deslocamento %}
                             <div class="time-item">
                                 <i class="fas fa-route"></i>
-                                <span>Deslocamento: {{ ponto.tempo_deslocamento }} min</span>
+                                <span><strong>Tempo de Deslocamento:</strong> {{ ponto.tempo_deslocamento }} min</span>
                             </div>
                             {% endif %}
                             {% if ponto.obrigatorio %}
                             <div class="time-item">
                                 <i class="fas fa-exclamation-circle" style="color: #f44336;"></i>
-                                <span style="color: #f44336;">Obrigatório</span>
+                                <span style="color: #f44336;"><strong>Obrigatório</strong></span>
+                            </div>
+                            {% endif %}
+                            {% if ponto.ordem %}
+                            <div class="time-item">
+                                <i class="fas fa-list-ol"></i>
+                                <span><strong>Ordem:</strong> {{ ponto.ordem }}</span>
                             </div>
                             {% endif %}
                             {% else %}
                             <div class="time-item">
-                                <i class="fas fa-play"></i>
-                                <span>Início: {{ ponto.horario_inicio.strftime('%H:%M') if ponto.horario_inicio else 'Não definido' }}</span>
+                                <i class="fas fa-info-circle"></i>
+                                <span>Ponto base padrão</span>
                             </div>
-                            <div class="time-item">
-                                <i class="fas fa-stop"></i>
-                                <span>Fim: {{ ponto.horario_fim.strftime('%H:%M') if ponto.horario_fim else 'Não definido' }}</span>
-                            </div>
-                            {% if hasattr(ponto, 'tempo_permanencia') and ponto.tempo_permanencia %}
-                            <div class="time-item">
-                                <i class="fas fa-hourglass-half"></i>
-                                <span>Permanência: {{ ponto.tempo_permanencia }} min</span>
-                            </div>
-                            {% endif %}
                             {% endif %}
                         </div>
                         
@@ -105,11 +104,6 @@
                         <div class="ponto-instructions">
                             <h5>Instruções Específicas:</h5>
                             <p>{{ ponto.instrucoes_especificas }}</p>
-                        </div>
-                        {% elif ponto.instrucoes %}
-                        <div class="ponto-instructions">
-                            <h5>Instruções:</h5>
-                            <p>{{ ponto.instrucoes }}</p>
                         </div>
                         {% endif %}
                     </div>
@@ -127,34 +121,35 @@
 
         {% if itinerarios %}
         <div class="itinerarios-section">
-            <h3>Itinerários</h3>
+            <h3>Itinerários e Tempos de Deslocamento</h3>
             <div class="itinerarios">
                 {% for itinerario in itinerarios %}
                 <div class="itinerario-card">
                     <div class="itinerario-header">
                         <i class="fas fa-route"></i>
-                        <h4>Rota {{ loop.index }}</h4>
+                        <h4>Rota {{ loop.index }}: {{ pontos_base[loop.index0].nome }} → {{ pontos_base[loop.index0 + 1].nome }}</h4>
                     </div>
                     <div class="itinerario-details">
                         <div class="route-info">
-                                                    <div class="route-point">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>{{ pontos_base[loop.index0].nome }}</span>
-                        </div>
-                        <div class="route-arrow">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                        <div class="route-point">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>{{ pontos_base[loop.index0 + 1].nome }}</span>
-                        </div>
+                            <div class="route-point">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span><strong>Origem:</strong> {{ pontos_base[loop.index0].nome }}</span>
+                            </div>
+                            <div class="route-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="route-point">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span><strong>Destino:</strong> {{ pontos_base[loop.index0 + 1].nome }}</span>
+                            </div>
                         </div>
                         <div class="route-time">
                             <i class="fas fa-clock"></i>
-                            <span>Tempo estimado: {{ itinerario.tempo_estimado }} min</span>
+                            <span><strong>Tempo estimado de deslocamento:</strong> {{ itinerario.tempo_estimado }} min</span>
                         </div>
                         {% if itinerario.instrucoes %}
                         <div class="route-instructions">
+                            <h5>Instruções da Rota:</h5>
                             <p>{{ itinerario.instrucoes }}</p>
                         </div>
                         {% endif %}
@@ -169,6 +164,27 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<style>
+.ponto-timestamp {
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.ponto-timestamp small {
+    display: block;
+    line-height: 1.2;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+</style>
+
 <script>
 function registrarPresenca(pontoId) {
     fetch(`/registrar_presenca/${pontoId}`, {
@@ -185,12 +201,28 @@ function registrarPresenca(pontoId) {
                 '<i class="fas fa-check-circle text-success"></i><span>Presente</span>';
             document.getElementById(`btn-text-${pontoId}`).textContent = 'Registrar Saída';
             document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`).classList.add('btn-exit');
+            
+            // Mostrar timestamp da chegada
+            const timestampElement = document.getElementById(`timestamp-${pontoId}`);
+            timestampElement.innerHTML = `<small class="text-muted">Chegada: ${data.timestamp_chegada}</small>`;
+            timestampElement.style.display = 'block';
+            
         } else if (data.status === 'saida') {
             // Atualizar interface para saída
             document.getElementById(`status-${pontoId}`).innerHTML = 
                 '<i class="fas fa-times-circle text-muted"></i><span>Concluído</span>';
             document.getElementById(`btn-text-${pontoId}`).textContent = 'Concluído';
             document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`).disabled = true;
+            
+            // Atualizar timestamp com informações de chegada e saída
+            const timestampElement = document.getElementById(`timestamp-${pontoId}`);
+            timestampElement.innerHTML = `
+                <small class="text-muted">
+                    Chegada: ${data.timestamp_chegada}<br>
+                    Saída: ${data.timestamp_saida}
+                </small>
+            `;
+            timestampElement.style.display = 'block';
         }
         
         // Mostrar mensagem de sucesso

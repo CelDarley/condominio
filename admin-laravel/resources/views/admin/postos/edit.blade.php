@@ -13,9 +13,19 @@
                 </h6>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.postos.update', $posto) }}">
+                <form method="POST" action="{{ route('admin.postos.update', $posto) }}" id="form-edit-posto">
                     @csrf
                     @method('PUT')
+                    
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     
                     <div class="mb-3">
                         <label for="nome" class="form-label">Nome do Posto <span class="text-danger">*</span></label>
@@ -102,7 +112,7 @@
                             </a>
                         </div>
                         <div>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="btn-submit">
                                 <i class="fas fa-save"></i> Salvar Alterações
                             </button>
                             <a href="{{ route('admin.postos.show', $posto) }}" class="btn btn-outline-secondary ml-2">
@@ -149,6 +159,28 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('form-edit-posto');
+    const submitBtn = document.getElementById('btn-submit');
+    
+    // Prevenir múltiplos envios
+    form.addEventListener('submit', function(e) {
+        console.log('Evento submit disparado para edição de posto');
+        
+        // Desabilitar botão e mostrar loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        
+        // Adicionar classe de loading ao formulário
+        form.classList.add('loading');
+        
+        // Log para debug
+        console.log('Enviando formulário de edição...');
+        console.log('Dados do formulário:', new FormData(form));
+        
+        // Permitir que o formulário continue
+        return true;
+    });
+    
     // Avisar sobre desativação do posto
     const ativoCheckbox = document.getElementById('ativo');
     const cartoesCount = {{ $posto->cartoesPrograma ? $posto->cartoesPrograma->count() : 0 }};
@@ -160,6 +192,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Log para debug
+    console.log('Formulário de edição de posto carregado');
+    console.log('Posto ID:', {{ $posto->id }});
+    console.log('Cartões programa associados:', cartoesCount);
 });
 </script>
+<style>
+/* Estilos para loading */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading .form-control {
+    background-color: #f8f9fa;
+}
+
+/* Estilos para botão desabilitado */
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+/* Animação de loading */
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
 @endsection 

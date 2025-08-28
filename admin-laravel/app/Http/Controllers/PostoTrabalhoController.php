@@ -15,7 +15,7 @@ class PostoTrabalhoController extends Controller
 
     public function index()
     {
-        $postos = PostoTrabalho::ativos()->get();
+        $postos = PostoTrabalho::with(['pontosBase', 'cartoesPrograma'])->get();
         return view('admin.postos.index', compact('postos'));
     }
 
@@ -45,14 +45,14 @@ class PostoTrabalhoController extends Controller
     {
         $posto->load([
             'pontosBase' => function($query) {
-                $query->ativos()->orderBy('ordem');
+                $query->ativos()->orderBy('nome');
             },
             'pontosBase.cartaoProgramaPontos',
             'cartoesPrograma' => function($query) {
                 $query->ativos()->with('cartaoProgramaPontos')->orderBy('nome');
             }
         ]);
-        
+
         return view('admin.postos.show', compact('posto'));
     }
 
@@ -81,17 +81,61 @@ class PostoTrabalhoController extends Controller
 
     public function destroy(PostoTrabalho $posto)
     {
-        // Soft delete - apenas desativa
-        $posto->update(['ativo' => false]);
+        try {
+            // Log para debug
+            \Log::info('Tentando desativar posto de trabalho', [
+                'posto_id' => $posto->id,
+                'posto_nome' => $posto->nome,
+                'user_id' => auth()->id(),
+                'pontos_base_count' => $posto->pontosBase->count(),
+                'cartoes_programa_count' => $posto->cartoesPrograma->count()
+            ]);
 
-        return redirect()->route('admin.postos.index')
-            ->with('success', 'Posto de trabalho desativado com sucesso!');
+            // Verificar se o posto tem pontos base ativos
+            $pontosAtivos = $posto->pontosBase()->ativos()->count();
+            if ($pontosAtivos > 0) {
+                \Log::warning('Tentativa de desativar posto com pontos base ativos', [
+                    'posto_id' => $posto->id,
+                    'pontos_ativos' => $pontosAtivos
+                ]);
+            }
+
+            // Verificar se o posto tem cartões programa ativos
+            $cartoesAtivos = $posto->cartoesPrograma()->ativos()->count();
+            if ($cartoesAtivos > 0) {
+                \Log::warning('Tentativa de desativar posto com cartões programa ativos', [
+                    'posto_id' => $posto->id,
+                    'cartoes_ativos' => $cartoesAtivos
+                ]);
+            }
+
+            // Soft delete - apenas desativa
+            $posto->update(['ativo' => false]);
+
+            \Log::info('Posto de trabalho desativado com sucesso', [
+                'posto_id' => $posto->id,
+                'posto_nome' => $posto->nome
+            ]);
+
+            return redirect()->route('admin.postos.index')
+                ->with('success', 'Posto de trabalho desativado com sucesso!');
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao desativar posto de trabalho', [
+                'posto_id' => $posto->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('admin.postos.index')
+                ->with('error', 'Erro ao desativar posto de trabalho: ' . $e->getMessage());
+        }
     }
 
     // Gerenciamento de Pontos Base
     public function pontosBase(PostoTrabalho $posto)
     {
-        $pontos = $posto->pontosBase()->ativos()->orderBy('ordem')->get();
+        $pontos = $posto->pontosBase()->ativos()->orderBy('nome')->get();
         return view('admin.postos.pontos-base', compact('posto', 'pontos'));
     }
 
@@ -102,36 +146,142 @@ class PostoTrabalhoController extends Controller
 
     public function storePontoBase(Request $request, PostoTrabalho $posto)
     {
-        $request->validate([
-            'nome' => 'required|string|max:100',
-            'endereco' => 'required|string|max:255',
-            'descricao' => 'nullable|string',
-            'instrucoes' => 'nullable|string',
-            'ordem' => 'nullable|integer|min:1',
-            'horario_inicio' => 'nullable|string',
-            'horario_fim' => 'nullable|string',
-            'tempo_permanencia' => 'nullable|integer|min:1|max:120',
-            'tempo_deslocamento' => 'nullable|integer|min:1|max:60'
-        ]);
-
-        // Se não informou ordem, pega a próxima
-        $ordem = $request->ordem ?? ($posto->pontosBase()->max('ordem') + 1);
-
-        PontoBase::create([
+        // Log para debug
+        \Log::info('Tentando criar ponto base', [
+            'request_data' => $request->all(),
             'posto_id' => $posto->id,
-            'nome' => $request->nome,
-            'endereco' => $request->endereco,
-            'descricao' => $request->descricao,
-            'instrucoes' => $request->instrucoes,
-            'ordem' => $ordem,
-            'horario_inicio' => $request->horario_inicio ?? '08:00',
-            'horario_fim' => $request->horario_fim ?? '18:00',
-            'tempo_permanencia' => $request->tempo_permanencia ?? 10,
-            'tempo_deslocamento' => $request->tempo_deslocamento ?? 5,
-            'ativo' => $request->has('ativo')
+            'user_id' => auth()->id(),
+            'session_id' => session()->getId()
         ]);
 
-        return redirect()->route('admin.postos.pontos-base', $posto)
-            ->with('success', 'Ponto base criado com sucesso!');
+        try {
+            $request->validate([
+                'nome' => 'required|string|max:100',
+                'endereco' => 'required|string|max:255',
+                'descricao' => 'nullable|string',
+                'latitude' => 'nullable|string',
+                'longitude' => 'nullable|string'
+            ]);
+
+            $pontoData = [
+                'posto_id' => $posto->id,
+                'nome' => $request->nome,
+                'endereco' => $request->endereco,
+                'descricao' => $request->descricao ?: null,
+                'latitude' => $request->latitude ?: null,
+                'longitude' => $request->longitude ?: null,
+                'ativo' => $request->has('ativo') || $request->input('ativo') === 'on' || $request->boolean('ativo')
+            ];
+
+            \Log::info('Dados do ponto base para criação', $pontoData);
+
+            $ponto = PontoBase::create($pontoData);
+
+            \Log::info('Ponto base criado com sucesso', ['ponto_id' => $ponto->id]);
+
+            // Log adicional para debug
+            \Log::info('Redirecionando após criação', [
+                'route' => 'admin.postos.pontos-base',
+                'posto_id' => $posto->id
+            ]);
+
+            return redirect()->route('admin.postos.pontos-base', $posto)
+                ->with('success', 'Ponto base criado com sucesso!');
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao criar ponto base', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return back()->withErrors(['error' => 'Erro ao criar ponto base: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    // Edição de Ponto Base
+    public function editPontoBase(PostoTrabalho $posto, PontoBase $ponto)
+    {
+        // Verificar se o ponto pertence ao posto
+        if ($ponto->posto_id !== $posto->id) {
+            abort(404, 'Ponto base não encontrado neste posto.');
+        }
+
+        return view('admin.postos.edit-ponto-base', compact('posto', 'ponto'));
+    }
+
+    // Atualização de Ponto Base
+    public function updatePontoBase(Request $request, PostoTrabalho $posto, PontoBase $ponto)
+    {
+        // Verificar se o ponto pertence ao posto
+        if ($ponto->posto_id !== $posto->id) {
+            abort(404, 'Ponto base não encontrado neste posto.');
+        }
+
+        try {
+            $request->validate([
+                'nome' => 'required|string|max:100',
+                'endereco' => 'required|string|max:255',
+                'descricao' => 'nullable|string',
+                'latitude' => 'nullable|string',
+                'longitude' => 'nullable|string'
+            ]);
+
+            $pontoData = [
+                'nome' => $request->nome,
+                'endereco' => $request->endereco,
+                'descricao' => $request->descricao ?: null,
+                'latitude' => $request->latitude ?: null,
+                'longitude' => $request->longitude ?: null,
+                'ativo' => $request->has('ativo') || $request->input('ativo') === 'on' || $request->boolean('ativo')
+            ];
+
+            $ponto->update($pontoData);
+
+            return redirect()->route('admin.postos.pontos-base', $posto)
+                ->with('success', 'Ponto base atualizado com sucesso!');
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao atualizar ponto base', [
+                'error' => $e->getMessage(),
+                'ponto_id' => $ponto->id,
+                'posto_id' => $posto->id
+            ]);
+
+            return back()->withErrors(['error' => 'Erro ao atualizar ponto base: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    // Exclusão de Ponto Base
+    public function destroyPontoBase(PostoTrabalho $posto, PontoBase $ponto)
+    {
+        // Verificar se o ponto pertence ao posto
+        if ($ponto->posto_id !== $posto->id) {
+            abort(404, 'Ponto base não encontrado neste posto.');
+        }
+
+        try {
+            // Verificar se o ponto está sendo usado em algum cartão programa
+            if ($ponto->isUsadoEmCartaoPrograma()) {
+                return redirect()->route('admin.postos.pontos-base', $posto)
+                    ->with('error', 'Não é possível excluir este ponto base pois ele está sendo usado em um ou mais cartões programa.');
+            }
+
+            // Soft delete - apenas desativa
+            $ponto->update(['ativo' => false]);
+
+            return redirect()->route('admin.postos.pontos-base', $posto)
+                ->with('success', 'Ponto base desativado com sucesso!');
+
+        } catch (\Exception $e) {
+            \Log::error('Erro ao excluir ponto base', [
+                'error' => $e->getMessage(),
+                'ponto_id' => $ponto->id,
+                'posto_id' => $posto->id
+            ]);
+
+            return redirect()->route('admin.postos.pontos-base', $posto)
+                ->with('error', 'Erro ao excluir ponto base: ' . $e->getMessage());
+        }
     }
 }

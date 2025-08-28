@@ -252,16 +252,29 @@ class CartaoProgramaController extends Controller
         $request->validate([
             'pontos' => 'required|array',
             'pontos.*.id' => 'required|exists:cartao_programa_pontos,id',
-            'pontos.*.ordem' => 'required|integer|min:1'
+            'pontos.*.nova_ordem' => 'required|integer|min:1'
         ]);
 
-        foreach ($request->pontos as $ponto) {
-            $cartaoPrograma->cartaoProgramaPontos()
-                          ->where('id', $ponto['id'])
-                          ->update(['ordem' => $ponto['ordem']]);
-        }
+        try {
+            foreach ($request->pontos as $ponto) {
+                $cartaoPrograma->cartaoProgramaPontos()
+                              ->where('id', $ponto['id'])
+                              ->update(['ordem' => $ponto['nova_ordem']]);
+            }
 
-        return response()->json(['success' => true, 'message' => 'Ordem dos pontos atualizada com sucesso!']);
+            return response()->json(['success' => true, 'message' => 'Ordem dos pontos atualizada com sucesso!']);
+        } catch (\Exception $e) {
+            \Log::error('Erro ao reordenar pontos', [
+                'cartao_id' => $cartaoPrograma->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false, 
+                'message' => 'Erro ao atualizar ordem dos pontos: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
