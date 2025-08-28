@@ -359,7 +359,7 @@ def posto(posto_id):
             itinerarios.append(itinerario)
     
     # Buscar status atual dos pontos base para o usuário logado
-    hoje = datetime.now().date()
+    hoje = datetime.now().date()  # Usar datetime.now() para consistência
     status_pontos = {}
     
     for ponto_info in pontos_base:
@@ -390,6 +390,10 @@ def posto(posto_id):
                 'timestamp_saida': None
             }
     
+    print(f"DEBUG: Status dos pontos carregados - {len(status_pontos)} pontos")
+    for ponto_id, status in status_pontos.items():
+        print(f"  Ponto {ponto_id}: {status['status']}")
+    
     return render_template('posto.html', 
                          posto=posto, 
                          pontos_base=pontos_base, 
@@ -402,7 +406,7 @@ def posto(posto_id):
 @login_required
 def status_pontos(posto_id):
     """Retorna o status atual dos pontos base de um posto"""
-    hoje = datetime.now().date()
+    hoje = datetime.now().date()  # Usar datetime.now() para consistência
     
     # Buscar pontos base do posto
     pontos_base = PontoBase.query.filter_by(posto_id=posto_id, ativo=True).all()
@@ -441,51 +445,73 @@ def status_pontos(posto_id):
             'timestamp_saida': timestamp_saida
         })
     
+    print(f"DEBUG: API status_pontos - Posto {posto_id}, {len(status_pontos)} pontos")
+    for status in status_pontos:
+        print(f"  Ponto {status['ponto_id']}: {status['status']}")
+    
     return jsonify(status_pontos)
 
 @app.route('/registrar_presenca/<int:ponto_id>', methods=['POST'])
 @login_required
 def registrar_presenca(ponto_id):
-    # Verificar se já existe um registro de chegada
-    registro = RegistroPresenca.query.filter_by(
-        usuario_id=current_user.id,
-        ponto_id=ponto_id
-    ).filter(
-        RegistroPresenca.timestamp_chegada >= datetime.now().date()
-    ).first()
-    
-    if not registro:
-        # Novo registro de chegada
-        novo_registro = RegistroPresenca(
+    try:
+        # Usar datetime.now() para consistência com o timezone local
+        agora = datetime.now()
+        hoje = agora.date()
+        
+        # Verificar se já existe um registro de chegada para hoje
+        registro = RegistroPresenca.query.filter_by(
             usuario_id=current_user.id,
             ponto_id=ponto_id
-        )
-        db.session.add(novo_registro)
-        db.session.commit()
+        ).filter(
+            RegistroPresenca.timestamp_chegada >= hoje
+        ).first()
         
-        # Formatar data e hora da chegada
-        chegada_formatada = novo_registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
-        
+        if not registro:
+            # Novo registro de chegada
+            novo_registro = RegistroPresenca(
+                usuario_id=current_user.id,
+                ponto_id=ponto_id,
+                timestamp_chegada=agora  # Usar agora em vez de datetime.utcnow()
+            )
+            db.session.add(novo_registro)
+            db.session.commit()
+            
+            print(f"DEBUG: Registro de chegada criado - ID: {novo_registro.id}, Usuário: {current_user.id}, Ponto: {ponto_id}, Timestamp: {novo_registro.timestamp_chegada}")
+            
+            # Formatar data e hora da chegada
+            chegada_formatada = novo_registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
+            
+            return jsonify({
+                'status': 'chegada', 
+                'message': 'Presença registrada com sucesso',
+                'timestamp_chegada': chegada_formatada
+            })
+        else:
+            # Registrar saída
+            registro.timestamp_saida = agora  # Usar agora em vez de datetime.utcnow()
+            db.session.commit()
+            
+            print(f"DEBUG: Saída registrada - ID: {registro.id}, Usuário: {current_user.id}, Ponto: {ponto_id}, Saída: {registro.timestamp_saida}")
+            
+            # Formatar data e hora da saída
+            chegada_formatada = registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
+            saida_formatada = registro.timestamp_saida.strftime('%d/%m/%Y %H:%M:%S')
+            
+            return jsonify({
+                'status': 'saida', 
+                'message': 'Saída registrada com sucesso',
+                'timestamp_chegada': chegada_formatada,
+                'timestamp_saida': saida_formatada
+            })
+    
+    except Exception as e:
+        print(f"DEBUG: Erro ao registrar presença - {e}")
+        db.session.rollback()
         return jsonify({
-            'status': 'chegada', 
-            'message': 'Presença registrada com sucesso',
-            'timestamp_chegada': chegada_formatada
-        })
-    else:
-        # Registrar saída
-        registro.timestamp_saida = datetime.utcnow()
-        db.session.commit()
-        
-        # Formatar data e hora da saída
-        chegada_formatada = registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
-        saida_formatada = registro.timestamp_saida.strftime('%d/%m/%Y %H:%M:%S')
-        
-        return jsonify({
-            'status': 'saida', 
-            'message': 'Saída registrada com sucesso',
-            'timestamp_chegada': chegada_formatada,
-            'timestamp_saida': saida_formatada
-        })
+            'status': 'error',
+            'message': f'Erro ao registrar presença: {str(e)}'
+        }), 500
 
 @app.route('/enviar_aviso', methods=['POST'])
 @login_required
