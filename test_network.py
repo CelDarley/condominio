@@ -1,63 +1,46 @@
 #!/usr/bin/env python3
-"""
-Script para testar conectividade de rede
-"""
 
 import socket
 import requests
+from flask import Flask
 
-def test_local_binding():
-    """Testa se conseguimos fazer binding em diferentes interfaces"""
-    print("🔍 Testando binding de rede...")
-    
-    # Teste 1: Binding em localhost
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('127.0.0.1', 5001))
-        sock.listen(1)
-        print("✅ Binding em 127.0.0.1:5001 - OK")
-        sock.close()
-    except Exception as e:
-        print(f"❌ Binding em 127.0.0.1:5001 - Falhou: {e}")
-    
-    # Teste 2: Binding em 0.0.0.0
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('0.0.0.0', 5002))
-        sock.listen(1)
-        print("✅ Binding em 0.0.0.0:5002 - OK")
-        sock.close()
-    except Exception as e:
-        print(f"❌ Binding em 0.0.0.0:5002 - Falhou: {e}")
-    
-    # Teste 3: Binding no IP específico
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('10.100.0.58', 5003))
-        sock.listen(1)
-        print("✅ Binding em 10.100.0.58:5003 - OK")
-        sock.close()
-    except Exception as e:
-        print(f"❌ Binding em 10.100.0.58:5003 - Falhou: {e}")
+app = Flask(__name__)
 
-def test_connectivity():
-    """Testa conectividade para diferentes IPs"""
-    print("\n🌐 Testando conectividade...")
+@app.route('/')
+def hello():
+    return "Teste de conectividade - Aplicação funcionando!"
+
+@app.route('/test')
+def test():
+    return "Rota de teste funcionando!"
+
+if __name__ == '__main__':
+    # Obter informações de rede
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
     
-    # Teste localhost
+    print(f"🔍 Informações de rede:")
+    print(f"   Hostname: {hostname}")
+    print(f"   IP Local: {local_ip}")
+    print(f"   IP Rede: 10.100.0.58")
+    
+    # Testar conectividade
     try:
-        response = requests.get('http://127.0.0.1:5000', timeout=5)
-        print(f"✅ localhost:5000 - Status: {response.status_code}")
+        response = requests.get('http://localhost:5000', timeout=5)
+        print(f"✅ Localhost:5000 - Status: {response.status_code}")
     except Exception as e:
-        print(f"❌ localhost:5000 - Falhou: {e}")
+        print(f"❌ Localhost:5000 - Erro: {e}")
     
-    # Teste IP específico
     try:
         response = requests.get('http://10.100.0.58:5000', timeout=5)
         print(f"✅ 10.100.0.58:5000 - Status: {response.status_code}")
     except Exception as e:
-        print(f"❌ 10.100.0.58:5000 - Falhou: {e}")
-
-if __name__ == "__main__":
-    test_local_binding()
-    test_connectivity()
+        print(f"❌ 10.100.0.58:5000 - Erro: {e}")
+    
+    print(f"\n🚀 Iniciando aplicação Flask em 0.0.0.0:5000")
+    print(f"📱 Acesse em:")
+    print(f"   - http://localhost:5000")
+    print(f"   - http://10.100.0.58:5000")
+    print(f"   - http://{local_ip}:5000")
+    
+    app.run(host='0.0.0.0', port=5000, debug=False)

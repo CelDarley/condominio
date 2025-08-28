@@ -53,11 +53,27 @@
                             <span class="ponto-ordem">#{{ ponto.ordem }}</span>
                         </div>
                         <div class="ponto-status" id="status-{{ ponto.id }}">
-                            <i class="fas fa-clock"></i>
-                            <span>Pendente</span>
+                            {% if status_pontos[ponto.id].status == 'pendente' %}
+                                <i class="fas fa-clock"></i>
+                                <span>Pendente</span>
+                            {% elif status_pontos[ponto.id].status == 'presente' %}
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span>Presente</span>
+                            {% elif status_pontos[ponto.id].status == 'concluido' %}
+                                <i class="fas fa-times-circle text-muted"></i>
+                                <span>Concluído</span>
+                            {% endif %}
                         </div>
-                        <div class="ponto-timestamp" id="timestamp-{{ ponto.id }}" style="display: none;">
-                            <small class="text-muted"></small>
+                        <div class="ponto-timestamp" id="timestamp-{{ ponto.id }}" 
+                             {% if status_pontos[ponto.id].status == 'pendente' %}style="display: none;"{% endif %}>
+                            {% if status_pontos[ponto.id].status == 'presente' %}
+                                <small class="text-muted">Chegada: {{ status_pontos[ponto.id].timestamp_chegada }}</small>
+                            {% elif status_pontos[ponto.id].status == 'concluido' %}
+                                <small class="text-muted">
+                                    Chegada: {{ status_pontos[ponto.id].timestamp_chegada }}<br>
+                                    Saída: {{ status_pontos[ponto.id].timestamp_saida }}
+                                </small>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -109,10 +125,22 @@
                     </div>
                     
                     <div class="ponto-actions">
-                        <button class="btn-register-presence" onclick="registrarPresenca({{ ponto.id }})">
-                            <i class="fas fa-check"></i>
-                            <span id="btn-text-{{ ponto.id }}">Registrar Chegada</span>
-                        </button>
+                        {% if status_pontos[ponto.id].status == 'pendente' %}
+                            <button class="btn-register-presence" onclick="registrarPresenca({{ ponto.id }})">
+                                <i class="fas fa-check"></i>
+                                <span id="btn-text-{{ ponto.id }}">Registrar Chegada</span>
+                            </button>
+                        {% elif status_pontos[ponto.id].status == 'presente' %}
+                            <button class="btn-register-presence btn-exit" onclick="registrarPresenca({{ ponto.id }})">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span id="btn-text-{{ ponto.id }}">Registrar Saída</span>
+                            </button>
+                        {% elif status_pontos[ponto.id].status == 'concluido' %}
+                            <button class="btn-register-presence" disabled>
+                                <i class="fas fa-check-double"></i>
+                                <span id="btn-text-{{ ponto.id }}">Concluído</span>
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -183,6 +211,36 @@
 .text-muted {
     color: #6c757d !important;
 }
+
+.btn-register-presence {
+    transition: all 0.3s ease;
+}
+
+.btn-register-presence.btn-exit {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.btn-register-presence.btn-exit:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+.btn-register-presence:disabled {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.ponto-status .text-success {
+    color: #28a745 !important;
+}
+
+.ponto-status .text-muted {
+    color: #6c757d !important;
+}
 </style>
 
 <script>
@@ -199,8 +257,11 @@ function registrarPresenca(pontoId) {
             // Atualizar interface para chegada
             document.getElementById(`status-${pontoId}`).innerHTML = 
                 '<i class="fas fa-check-circle text-success"></i><span>Presente</span>';
-            document.getElementById(`btn-text-${pontoId}`).textContent = 'Registrar Saída';
-            document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`).classList.add('btn-exit');
+            
+            // Atualizar botão para "Registrar Saída"
+            const button = document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`);
+            button.className = 'btn-register-presence btn-exit';
+            button.innerHTML = '<i class="fas fa-sign-out-alt"></i><span id="btn-text-' + pontoId + '">Registrar Saída</span>';
             
             // Mostrar timestamp da chegada
             const timestampElement = document.getElementById(`timestamp-${pontoId}`);
@@ -211,8 +272,12 @@ function registrarPresenca(pontoId) {
             // Atualizar interface para saída
             document.getElementById(`status-${pontoId}`).innerHTML = 
                 '<i class="fas fa-times-circle text-muted"></i><span>Concluído</span>';
-            document.getElementById(`btn-text-${pontoId}`).textContent = 'Concluído';
-            document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`).disabled = true;
+            
+            // Desabilitar botão
+            const button = document.querySelector(`[data-ponto-id="${pontoId}"] .btn-register-presence`);
+            button.disabled = true;
+            button.className = 'btn-register-presence';
+            button.innerHTML = '<i class="fas fa-check-double"></i><span id="btn-text-' + pontoId + '">Concluído</span>';
             
             // Atualizar timestamp com informações de chegada e saída
             const timestampElement = document.getElementById(`timestamp-${pontoId}`);

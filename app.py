@@ -358,7 +358,90 @@ def posto(posto_id):
         if itinerario:
             itinerarios.append(itinerario)
     
-    return render_template('posto.html', posto=posto, pontos_base=pontos_base, itinerarios=itinerarios, cartao_programa=cartao_programa, escala=escala)
+    # Buscar status atual dos pontos base para o usuário logado
+    hoje = datetime.now().date()
+    status_pontos = {}
+    
+    for ponto_info in pontos_base:
+        registro = RegistroPresenca.query.filter_by(
+            usuario_id=current_user.id,
+            ponto_id=ponto_info['id']
+        ).filter(
+            RegistroPresenca.timestamp_chegada >= hoje
+        ).first()
+        
+        if registro:
+            if registro.timestamp_saida:
+                status_pontos[ponto_info['id']] = {
+                    'status': 'concluido',
+                    'timestamp_chegada': registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S'),
+                    'timestamp_saida': registro.timestamp_saida.strftime('%d/%m/%Y %H:%M:%S')
+                }
+            else:
+                status_pontos[ponto_info['id']] = {
+                    'status': 'presente',
+                    'timestamp_chegada': registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S'),
+                    'timestamp_saida': None
+                }
+        else:
+            status_pontos[ponto_info['id']] = {
+                'status': 'pendente',
+                'timestamp_chegada': None,
+                'timestamp_saida': None
+            }
+    
+    return render_template('posto.html', 
+                         posto=posto, 
+                         pontos_base=pontos_base, 
+                         itinerarios=itinerarios, 
+                         cartao_programa=cartao_programa, 
+                         escala=escala,
+                         status_pontos=status_pontos)
+
+@app.route('/api/status_pontos/<int:posto_id>')
+@login_required
+def status_pontos(posto_id):
+    """Retorna o status atual dos pontos base de um posto"""
+    hoje = datetime.now().date()
+    
+    # Buscar pontos base do posto
+    pontos_base = PontoBase.query.filter_by(posto_id=posto_id, ativo=True).all()
+    
+    status_pontos = []
+    for ponto in pontos_base:
+        # Verificar se há registro de presença para hoje
+        registro = RegistroPresenca.query.filter_by(
+            usuario_id=current_user.id,
+            ponto_id=ponto.id
+        ).filter(
+            RegistroPresenca.timestamp_chegada >= hoje
+        ).first()
+        
+        if registro:
+            if registro.timestamp_saida:
+                # Usuário já saiu do ponto
+                status = 'concluido'
+                timestamp_chegada = registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
+                timestamp_saida = registro.timestamp_saida.strftime('%d/%m/%Y %H:%M:%S')
+            else:
+                # Usuário está presente no ponto
+                status = 'presente'
+                timestamp_chegada = registro.timestamp_chegada.strftime('%d/%m/%Y %H:%M:%S')
+                timestamp_saida = None
+        else:
+            # Usuário ainda não chegou ao ponto
+            status = 'pendente'
+            timestamp_chegada = None
+            timestamp_saida = None
+        
+        status_pontos.append({
+            'ponto_id': ponto.id,
+            'status': status,
+            'timestamp_chegada': timestamp_chegada,
+            'timestamp_saida': timestamp_saida
+        })
+    
+    return jsonify(status_pontos)
 
 @app.route('/registrar_presenca/<int:ponto_id>', methods=['POST'])
 @login_required
@@ -466,12 +549,13 @@ if __name__ == '__main__':
         db.create_all()
     
     # Configurações de rede para acesso externo
-    host = os.getenv('FLASK_HOST', '0.0.0.0')
-    port = int(os.getenv('FLASK_PORT', 5000))
-    debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    host = '0.0.0.0'  # Força aceitar conexões de qualquer IP
+    port = 5000
+    debug = False  # Desabilita debug para produção
     
     print(f"🚀 RBX-Security iniciando em http://{host}:{port}")
-    print(f"📱 Para acessar externamente, use o IP da sua máquina: http://SEU_IP:{port}")
+    print(f"📱 Para acessar externamente, use o IP da sua máquina: http://10.100.0.58:{port}")
     print(f"🔧 Modo debug: {debug}")
+    print(f"🌐 Aplicação aceitando conexões de qualquer IP (0.0.0.0)")
     
-    app.run(debug=debug, host=host, port=port)
+    app.run(debug=debug, host=host, port=port, threaded=True)
