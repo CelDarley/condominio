@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthMorador
@@ -15,10 +16,17 @@ class AuthMorador
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!session()->has('morador_id')) {
-            return redirect()->route('login')->with('error', 'Você precisa fazer login para acessar esta área.');
+        if (!Auth::guard('morador')->check()) {
+            return redirect()->route('login')->with('error', 'Você precisa estar logado para acessar esta página.');
         }
-        
+
+        // Verificar se o morador está ativo
+        $morador = Auth::guard('morador')->user();
+        if (!$morador->ativo) {
+            Auth::guard('morador')->logout();
+            return redirect()->route('login')->with('error', 'Sua conta foi desativada. Entre em contato com a administração.');
+        }
+
         return $next($request);
     }
 }

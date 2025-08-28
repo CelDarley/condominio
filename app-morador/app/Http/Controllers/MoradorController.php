@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Morador;
 
 class MoradorController extends Controller
 {
@@ -18,16 +21,18 @@ class MoradorController extends Controller
             'password' => 'required'
         ]);
         
-        $morador = \App\Models\Morador::where('email', $request->email)
-            ->where('ativo', true)
-            ->first();
-            
-        if ($morador && password_verify($request->password, $morador->password)) {
-            session(['morador_id' => $morador->id]);
-            return redirect()->route('dashboard');
+        // Tentar autenticar usando a guard padrão com moradores
+        $credentials = $request->only('email', 'password');
+        $credentials['ativo'] = true; // Só permite login de moradores ativos
+        
+        if (Auth::guard('morador')->attempt($credentials, $request->filled('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->intended(route('dashboard'));
         }
         
-        return back()->withErrors(['email' => 'Credenciais inválidas']);
+        return back()->withErrors([
+            'email' => 'As credenciais fornecidas não correspondem aos nossos registros.',
+        ])->onlyInput('email');
     }
     
     public function showRegistrationForm()
@@ -39,32 +44,36 @@ class MoradorController extends Controller
     {
         $request->validate([
             'nome' => 'required|string|max:255',
-            'email' => 'required|email|unique:moradors',
+            'email' => 'required|email|unique:moradores',
             'telefone' => 'nullable|string|max:20',
+            'endereco' => 'required|string|max:255',
             'apartamento' => 'required|string|max:10',
             'bloco' => 'nullable|string|max:10',
-            'cpf' => 'required|string|unique:moradors|max:14',
+            'cpf' => 'required|string|unique:moradores|max:14',
             'password' => 'required|string|min:6|confirmed'
         ]);
         
-        $morador = \App\Models\Morador::create([
+        $morador = Morador::create([
             'nome' => $request->nome,
             'email' => $request->email,
             'telefone' => $request->telefone,
+            'endereco' => $request->endereco,
             'apartamento' => $request->apartamento,
             'bloco' => $request->bloco,
             'cpf' => $request->cpf,
-            'password' => password_hash($request->password, PASSWORD_DEFAULT),
-            'ativo' => true
+            'password' => Hash::make($request->password),
+            'ativo' => false // Precisa ser ativado pelo admin
         ]);
         
-        session(['morador_id' => $morador->id]);
-        return redirect()->route('dashboard')->with('success', 'Conta criada com sucesso!');
+        return redirect()->route('login')->with('success', 'Conta criada! Aguarde a aprovação do administrador.');
     }
     
-    public function logout()
+    public function logout(Request $request)
     {
-        session()->forget('morador_id');
+        Auth::guard('morador')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
         return redirect()->route('home');
     }
 }

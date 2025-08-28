@@ -6,6 +6,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PostoTrabalhoController;
 use App\Http\Controllers\EscalaController;
 use App\Http\Controllers\CartaoProgramaController;
+use App\Http\Controllers\MoradorController;
 
 // Rota principal
 Route::get("/", function () {
@@ -33,6 +34,13 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('usuarios/{usuario}/toggle-status', [UsuarioController::class, 'toggleStatus'])->name('usuarios.toggle-status');
     Route::post('usuarios/{usuario}/deactivate', [UsuarioController::class, 'deactivate'])->name('usuarios.deactivate');
     Route::delete('usuarios/{usuario}/force-delete', [UsuarioController::class, 'forceDelete'])->name('usuarios.force-delete');
+
+    // Gerenciamento de Moradores
+    Route::resource('moradores', MoradorController::class);
+    Route::post('moradores/{morador}/toggle-status', [MoradorController::class, 'toggleStatus'])->name('moradores.toggle-status');
+    Route::patch('moradores/{morador}/change-password', [MoradorController::class, 'changePassword'])->name('moradores.change-password');
+    Route::post('moradores/{morador}/add-veiculo', [MoradorController::class, 'addVeiculo'])->name('moradores.add-veiculo');
+    Route::delete('moradores/{morador}/remove-veiculo/{veiculo}', [MoradorController::class, 'removeVeiculo'])->name('moradores.remove-veiculo');
 
     // Gerenciamento de Postos de Trabalho
     Route::resource('postos', PostoTrabalhoController::class);

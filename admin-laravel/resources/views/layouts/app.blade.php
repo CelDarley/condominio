@@ -35,6 +35,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {{ request()->is("admin/moradores*") ? "active" : "" }}" href="{{ route("admin.moradores.index") }}">
+                                <i class="fas fa-home me-2"></i>
+                                Moradores
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {{ request()->is("admin/postos*") ? "active" : "" }}" href="{{ route("admin.postos.index") }}">
                                 <i class="fas fa-map-marker-alt me-2"></i>
                                 Postos de Trabalho

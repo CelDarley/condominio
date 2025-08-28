@@ -1,6 +1,68 @@
-@extends('layouts.app')
+@extends('layouts.pwa')
 
 @section('title', 'Cadastrar')
+
+@section('styles')
+<style>
+    body {
+        background: linear-gradient(135deg, #364659 0%, #566273 100%);
+        min-height: 100vh;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(54, 70, 89, 0.1);
+    }
+    .card-header {
+        background: linear-gradient(135deg, #364659 0%, #566273 100%);
+        border-radius: 15px 15px 0 0;
+    }
+    .btn-success {
+        background: linear-gradient(135deg, #364659 0%, #566273 100%);
+        border: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+    .btn-success:hover {
+        background: linear-gradient(135deg, #566273 0%, #364659 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(54, 70, 89, 0.4);
+    }
+    .btn-outline-primary {
+        border-color: #364659;
+        color: #364659;
+    }
+    .btn-outline-primary:hover {
+        background-color: #364659;
+        border-color: #364659;
+    }
+    .input-group-text {
+        background-color: #F2F2F2;
+        border-color: #566273;
+        color: #364659;
+    }
+    .form-control {
+        border-color: #566273;
+    }
+    .form-control:focus {
+        border-color: #364659;
+        box-shadow: 0 0 0 0.2rem rgba(54, 70, 89, 0.25);
+    }
+    .btn-outline-secondary {
+        border-color: #566273;
+        color: #566273;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #566273;
+        border-color: #566273;
+    }
+    .alert-info {
+        background-color: #F2F2F2;
+        border-color: #566273;
+        color: #364659;
+    }
+</style>
+@endsection
 
 @section('content')
 <div class="row justify-content-center">
@@ -49,6 +111,22 @@
                                 </div>
                             @enderror
                         </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="endereco" class="form-label">Endereço *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <input type="text" class="form-control @error('endereco') is-invalid @enderror" 
+                                   id="endereco" name="endereco" value="{{ old('endereco') }}" required>
+                        </div>
+                        @error('endereco')
+                            <div class="invalid-feedback d-block">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
                     
                     <div class="row">
@@ -129,6 +207,9 @@
                                 </span>
                                 <input type="password" class="form-control @error('password') is-invalid @enderror" 
                                        id="password" name="password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye" id="eyeIcon"></i>
+                                </button>
                             </div>
                             @error('password')
                                 <div class="invalid-feedback d-block">
@@ -145,6 +226,9 @@
                                 </span>
                                 <input type="password" class="form-control" 
                                        id="password_confirmation" name="password_confirmation" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePasswordConfirmation">
+                                    <i class="fas fa-eye" id="eyeIconConfirmation"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -152,7 +236,7 @@
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Importante:</strong> Todos os campos marcados com * são obrigatórios. 
-                        Sua conta será verificada pela administração antes da ativação.
+                        Sua conta será verificada pela equipe de segurança antes da ativação.
                     </div>
                     
                     <div class="d-grid">
@@ -201,6 +285,34 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
+    // Funcionalidade do olhinho para mostrar/ocultar senha
+    $('#togglePassword').click(function() {
+        const passwordField = $('#password');
+        const eyeIcon = $('#eyeIcon');
+        const type = passwordField.attr('type') === 'password' ? 'text' : 'password';
+        passwordField.attr('type', type);
+        
+        if (type === 'text') {
+            eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
+    
+    $('#togglePasswordConfirmation').click(function() {
+        const passwordField = $('#password_confirmation');
+        const eyeIcon = $('#eyeIconConfirmation');
+        const type = passwordField.attr('type') === 'password' ? 'text' : 'password';
+        passwordField.attr('type', type);
+        
+        if (type === 'text') {
+            eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
+    
+    // Código existente de validação de senha
     // Máscara para CPF
     $('#cpf').mask('000.000.000-00');
     

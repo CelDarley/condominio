@@ -14,25 +14,30 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
             
-        $vigilantesOnline = \App\Models\Usuario::where('online', true)
-            ->where('tipo', 'vigilante')
-            ->get();
+        // Para o app-morador, não precisamos mostrar vigilantes online
+        // pois essa informação é do sistema administrativo
+        $vigilantesOnline = collect(); // Array vazio para compatibilidade
             
         return view('home', compact('alertasAtivos', 'vigilantesOnline'));
     }
     
     public function dashboard()
     {
-        $morador = \App\Models\Morador::find(session('morador_id'));
+        // Pegar o morador autenticado através do guard 'morador'
+        $morador = auth('morador')->user();
+        
+        // Se não houver morador autenticado, redirecionar para login
+        if (!$morador) {
+            return redirect()->route('login')->with('error', 'Você precisa estar logado para acessar esta página.');
+        }
         
         $alertasAtivos = \App\Models\Alerta::where('status', 'ativo')
             ->orderBy('prioridade', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
             
-        $vigilantesOnline = \App\Models\Usuario::where('online', true)
-            ->where('tipo', 'vigilante')
-            ->get();
+        // Para o app-morador, não precisamos mostrar vigilantes online
+        $vigilantesOnline = collect(); // Array vazio para compatibilidade
             
         $minhasSolicitacoes = \App\Models\SolicitacaoPanico::where('morador_id', $morador->id)
             ->orderBy('created_at', 'desc')
@@ -43,11 +48,7 @@ class DashboardController extends Controller
     
     public function getVigilantesPosicao()
     {
-        $vigilantes = \App\Models\Usuario::where('online', true)
-            ->where('tipo', 'vigilante')
-            ->whereNotNull('coordenadas_atual')
-            ->get(['id', 'nome', 'coordenadas_atual', 'ultima_atualizacao_localizacao']);
-            
-        return response()->json($vigilantes);
+        // Para o app-morador, retornar array vazio já que não temos acesso aos dados dos vigilantes
+        return response()->json([]);
     }
 }

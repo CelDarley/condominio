@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamp('resolvido_em')->nullable();
             $table->timestamps();
 
-            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
+            $table->foreign('usuario_id')->references('id')->on('usuario')->onDelete('set null');
         });
     }
 

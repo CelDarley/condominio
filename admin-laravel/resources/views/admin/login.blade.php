@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #364659 0%, #566273 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -23,7 +23,7 @@
             max-width: 400px;
         }
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #364659 0%, #566273 100%);
             color: white;
             text-align: center;
             padding: 2rem;
@@ -38,11 +38,11 @@
             transition: all 0.3s;
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #364659;
+            box-shadow: 0 0 0 0.2rem rgba(54, 70, 89, 0.25);
         }
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #364659 0%, #566273 100%);
             border: none;
             border-radius: 10px;
             padding: 0.75rem;
@@ -51,17 +51,19 @@
         }
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(54, 70, 89, 0.4);
         }
         .input-group-text {
-            background: transparent;
-            border: 2px solid #e9ecef;
+            background: #F2F2F2;
+            border: 2px solid #566273;
             border-right: none;
             border-radius: 10px 0 0 10px;
+            color: #364659;
         }
         .form-control {
             border-left: none;
             border-radius: 0 10px 10px 0;
+            border: 2px solid #566273;
         }
     </style>
 </head>
@@ -107,6 +109,9 @@
                                     </span>
                                     <input type="password" class="form-control @error("password") is-invalid @enderror" 
                                            id="password" name="password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye" id="eyeIcon"></i>
+                                    </button>
                                 </div>
                                 @error("password")
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -134,5 +139,27 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordField = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // Alterna o ícone
+            if (type === 'text') {
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+    });
+    </script>
 </body>
 </html>
