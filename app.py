@@ -150,9 +150,19 @@ def index():
         senha = request.form.get('senha')
         
         usuario = Usuario.query.filter_by(email=email).first()
-        if usuario and check_password_hash(usuario.senha_hash, senha):
-            login_user(usuario)
-            return redirect(url_for('home'))
+        
+        # Verificar se o usuário existe e tem senha válida
+        if usuario and usuario.senha_hash and len(usuario.senha_hash.strip()) > 0:
+            try:
+                if check_password_hash(usuario.senha_hash, senha):
+                    login_user(usuario)
+                    return redirect(url_for('home'))
+                else:
+                    flash('Email ou senha inválidos')
+            except ValueError as e:
+                # Hash inválido - log do erro para debug
+                print(f"Erro no hash da senha para usuário {usuario.email}: {e}")
+                flash('Erro na autenticação. Contate o administrador.')
         else:
             flash('Email ou senha inválidos')
     
