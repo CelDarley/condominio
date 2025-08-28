@@ -2,9 +2,71 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    //
+    use HasFactory, Notifiable;
+
+    protected $table = 'usuario';
+    protected $primaryKey = 'id';
+    public $timestamps = false;
+
+    protected $fillable = [
+        'nome',
+        'email',
+        'senha_hash',
+        'tipo',
+        'telefone',
+        'ativo',
+        'data_criacao',
+        'data_atualizacao'
+    ];
+
+    protected $hidden = [
+        'senha_hash',
+    ];
+
+    protected $casts = [
+        'ativo' => 'boolean',
+        'data_criacao' => 'datetime',
+        'data_atualizacao' => 'datetime',
+    ];
+
+    // Sobrescrever o método de autenticação para usar senha_hash
+    public function getAuthPassword()
+    {
+        return $this->senha_hash;
+    }
+
+    // Método para verificar se é admin
+    public function isAdmin()
+    {
+        return $this->tipo === 'admin';
+    }
+
+    // Método para verificar se é vigilante
+    public function isVigilante()
+    {
+        return $this->tipo === 'vigilante';
+    }
+
+    // Método para verificar se é morador
+    public function isMorador()
+    {
+        return $this->tipo === 'morador';
+    }
+
+    // Relacionamentos (se necessário)
+    public function escalas()
+    {
+        return $this->hasMany(Escala::class, 'usuario_id');
+    }
+
+    public function postosTrabalho()
+    {
+        return $this->belongsToMany(PostoTrabalho::class, 'escala', 'usuario_id', 'posto_trabalho_id'); // Corrigido
+    }
 }

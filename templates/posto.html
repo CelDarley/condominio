@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ posto.nome }} - SegCond{% endblock %}
+{% block title %}{{ posto.nome }} - RBX-Security{% endblock %}
 
 {% block content %}
 <div class="posto-container">
@@ -15,9 +15,35 @@
         {% endif %}
     </div>
 
+    {% if cartao_programa %}
+    <div class="posto-cartao-info">
+        <div class="posto-cartao-header">
+            <i class="fas fa-id-card"></i>
+            <h3>{{ cartao_programa.nome }}</h3>
+        </div>
+        <div class="posto-cartao-horario">
+            <i class="fas fa-clock"></i>
+            Horário: {{ cartao_programa.horario_inicio.strftime('%H:%M') }} - {{ cartao_programa.horario_fim.strftime('%H:%M') }}
+        </div>
+        {% if cartao_programa.descricao %}
+        <p style="margin: 8px 0 12px 0; color: #5d4037;">{{ cartao_programa.descricao }}</p>
+        {% endif %}
+        <div class="posto-cartao-stats">
+            <div class="posto-cartao-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ pontos_base|length }} pontos</span>
+            </div>
+            <div class="posto-cartao-stat">
+                <i class="fas fa-route"></i>
+                <span>Tempo total: {{ cartao_programa.tempo_total_estimado }} min</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="posto-content">
         <div class="pontos-base-section">
-            <h3>Pontos Base</h3>
+            <h3>{% if cartao_programa %}Sequência de Pontos{% else %}Pontos Base{% endif %}</h3>
             <div class="pontos-base">
                 {% for ponto in pontos_base %}
                 <div class="ponto-base-card" data-ponto-id="{{ ponto.id }}">
@@ -34,18 +60,39 @@
                     
                     <div class="ponto-details">
                         <div class="time-info">
-                            <div class="time-item">
-                                <i class="fas fa-play"></i>
-                                <span>Início: {{ ponto.horario_inicio.strftime('%H:%M') }}</span>
-                            </div>
-                            <div class="time-item">
-                                <i class="fas fa-stop"></i>
-                                <span>Fim: {{ ponto.horario_fim.strftime('%H:%M') }}</span>
-                            </div>
+                            {% if cartao_programa %}
                             <div class="time-item">
                                 <i class="fas fa-hourglass-half"></i>
                                 <span>Permanência: {{ ponto.tempo_permanencia }} min</span>
                             </div>
+                            {% if ponto.tempo_deslocamento %}
+                            <div class="time-item">
+                                <i class="fas fa-route"></i>
+                                <span>Deslocamento: {{ ponto.tempo_deslocamento }} min</span>
+                            </div>
+                            {% endif %}
+                            {% if ponto.obrigatorio %}
+                            <div class="time-item">
+                                <i class="fas fa-exclamation-circle" style="color: #f44336;"></i>
+                                <span style="color: #f44336;">Obrigatório</span>
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div class="time-item">
+                                <i class="fas fa-play"></i>
+                                <span>Início: {{ ponto.horario_inicio.strftime('%H:%M') if ponto.horario_inicio else 'Não definido' }}</span>
+                            </div>
+                            <div class="time-item">
+                                <i class="fas fa-stop"></i>
+                                <span>Fim: {{ ponto.horario_fim.strftime('%H:%M') if ponto.horario_fim else 'Não definido' }}</span>
+                            </div>
+                            {% if hasattr(ponto, 'tempo_permanencia') and ponto.tempo_permanencia %}
+                            <div class="time-item">
+                                <i class="fas fa-hourglass-half"></i>
+                                <span>Permanência: {{ ponto.tempo_permanencia }} min</span>
+                            </div>
+                            {% endif %}
+                            {% endif %}
                         </div>
                         
                         {% if ponto.descricao %}
@@ -54,7 +101,12 @@
                         </div>
                         {% endif %}
                         
-                        {% if ponto.instrucoes %}
+                        {% if cartao_programa and ponto.instrucoes_especificas %}
+                        <div class="ponto-instructions">
+                            <h5>Instruções Específicas:</h5>
+                            <p>{{ ponto.instrucoes_especificas }}</p>
+                        </div>
+                        {% elif ponto.instrucoes %}
                         <div class="ponto-instructions">
                             <h5>Instruções:</h5>
                             <p>{{ ponto.instrucoes }}</p>

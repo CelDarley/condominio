@@ -26,6 +26,7 @@ login_manager.login_view = 'index'
 
 # Modelos do banco de dados
 class Usuario(UserMixin, db.Model):
+    __tablename__ = 'usuario'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -34,28 +35,75 @@ class Usuario(UserMixin, db.Model):
     ativo = db.Column(db.Boolean, default=True)
 
 class PostoTrabalho(db.Model):
+    __tablename__ = 'posto_trabalho'
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text)
     ativo = db.Column(db.Boolean, default=True)
 
+class CartaoPrograma(db.Model):
+    __tablename__ = 'cartao_programas'
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text)
+    posto_trabalho_id = db.Column(db.Integer, db.ForeignKey('posto_trabalho.id'), nullable=False)
+    horario_inicio = db.Column(db.Time, nullable=False)
+    horario_fim = db.Column(db.Time, nullable=False)
+    tempo_total_estimado = db.Column(db.Integer, default=0)
+    ativo = db.Column(db.Boolean, default=True)
+    configuracoes = db.Column(db.Text)  # JSON
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    posto_trabalho = db.relationship('PostoTrabalho', backref='cartoes_programa')
+
 class Escala(db.Model):
+    __tablename__ = 'escala'
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    posto_id = db.Column(db.Integer, db.ForeignKey('posto_trabalho.id'), nullable=False)
+    posto_trabalho_id = db.Column(db.Integer, db.ForeignKey('posto_trabalho.id'), nullable=False)  # Atualizado
+    cartao_programa_id = db.Column(db.Integer, db.ForeignKey('cartao_programas.id'), nullable=True)  # Novo
     dia_semana = db.Column(db.Integer, nullable=False)  # 0=Segunda, 1=Terça, etc.
     ativo = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    usuario = db.relationship('Usuario', backref='escalas')
+    posto_trabalho = db.relationship('PostoTrabalho', backref='escalas')
+    cartao_programa = db.relationship('CartaoPrograma', backref='escalas')
 
 class PontoBase(db.Model):
+    __tablename__ = 'ponto_base'
     id = db.Column(db.Integer, primary_key=True)
     posto_id = db.Column(db.Integer, db.ForeignKey('posto_trabalho.id'), nullable=False)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text)
     horario_inicio = db.Column(db.Time, nullable=False)
     horario_fim = db.Column(db.Time, nullable=False)
-    tempo_permanencia = db.Column(db.Integer, nullable=False)  # em minutos
+    tempo_permanencia = db.Column(db.Integer, nullable=False)
     instrucoes = db.Column(db.Text)
-    ordem = db.Column(db.Integer, default=0)
+    ordem = db.Column(db.Integer)
+    endereco = db.Column(db.String(200), nullable=False, default='')
+    ativo = db.Column(db.Boolean, default=True)
+
+class CartaoProgramaPonto(db.Model):
+    __tablename__ = 'cartao_programa_pontos'
+    id = db.Column(db.Integer, primary_key=True)
+    cartao_programa_id = db.Column(db.Integer, db.ForeignKey('cartao_programas.id'), nullable=False)
+    ponto_base_id = db.Column(db.Integer, db.ForeignKey('ponto_base.id'), nullable=False)
+    ordem = db.Column(db.Integer, nullable=False)
+    tempo_permanencia = db.Column(db.Integer, default=10)  # em minutos
+    tempo_deslocamento = db.Column(db.Integer, default=5)  # em minutos
+    instrucoes_especificas = db.Column(db.Text)
+    obrigatorio = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    cartao_programa = db.relationship('CartaoPrograma', backref='pontos')
+    ponto_base = db.relationship('PontoBase', backref='cartao_programa_pontos')
 
 class Itinerario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -129,19 +177,88 @@ def home():
     ).first()
     
     if escala:
-        postos = PostoTrabalho.query.filter_by(id=escala.posto_id, ativo=True).all()
+        postos = PostoTrabalho.query.filter_by(id=escala.posto_trabalho_id, ativo=True).all()
+        # Incluir informações do cartão programa na escala
+        cartao_programa = None
+        if escala.cartao_programa_id:
+            cartao_programa = CartaoPrograma.query.get(escala.cartao_programa_id)
     else:
         postos = []
+        cartao_programa = None
     
-    return render_template('home.html', postos=postos, hoje=hoje)
+    return render_template('home.html', postos=postos, hoje=hoje, escala=escala, cartao_programa=cartao_programa)
+
+@app.route('/api/postos_por_dia/<int:dia_semana>')
+@login_required
+def postos_por_dia(dia_semana):
+    """Retorna postos de trabalho para um dia específico da semana"""
+    escala = Escala.query.filter_by(
+        usuario_id=current_user.id,
+        dia_semana=dia_semana,
+        ativo=True
+    ).first()
+    
+    if escala:
+        posto = PostoTrabalho.query.filter_by(id=escala.posto_trabalho_id, ativo=True).first()
+        cartao_programa = None
+        if escala.cartao_programa_id:
+            cartao_programa = CartaoPrograma.query.get(escala.cartao_programa_id)
+            
+        result = {
+            'posto': {
+                'id': posto.id,
+                'nome': posto.nome,
+                'descricao': posto.descricao
+            } if posto else None,
+            'cartao_programa': {
+                'nome': cartao_programa.nome,
+                'descricao': cartao_programa.descricao,
+                'horario_inicio': cartao_programa.horario_inicio.strftime('%H:%M'),
+                'horario_fim': cartao_programa.horario_fim.strftime('%H:%M')
+            } if cartao_programa else None
+        }
+        return jsonify(result)
+    else:
+        return jsonify({'posto': None, 'cartao_programa': None})
 
 @app.route('/posto/<int:posto_id>')
 @login_required
 def posto(posto_id):
     posto = PostoTrabalho.query.get_or_404(posto_id)
-    pontos_base = PontoBase.query.filter_by(posto_id=posto_id).order_by(PontoBase.ordem).all()
     
-    # Buscar itinerários
+    # Verificar se o vigilante tem escala para hoje neste posto
+    hoje = datetime.now().weekday()
+    escala = Escala.query.filter_by(
+        usuario_id=current_user.id,
+        posto_trabalho_id=posto_id,
+        dia_semana=hoje,
+        ativo=True
+    ).first()
+    
+    # Se há escala com cartão programa, usar os pontos do cartão
+    if escala and escala.cartao_programa_id:
+        cartao_programa = CartaoPrograma.query.get(escala.cartao_programa_id)
+        pontos_programa = CartaoProgramaPonto.query.filter_by(
+            cartao_programa_id=escala.cartao_programa_id
+        ).order_by(CartaoProgramaPonto.ordem).all()
+        
+        pontos_base = []
+        for ponto_programa in pontos_programa:
+            ponto_base = PontoBase.query.get(ponto_programa.ponto_base_id)
+            if ponto_base:
+                # Adicionar informações do cartão programa ao ponto
+                ponto_base.tempo_permanencia = ponto_programa.tempo_permanencia
+                ponto_base.tempo_deslocamento = ponto_programa.tempo_deslocamento
+                ponto_base.instrucoes_especificas = ponto_programa.instrucoes_especificas
+                ponto_base.obrigatorio = ponto_programa.obrigatorio
+                ponto_base.ordem = ponto_programa.ordem
+                pontos_base.append(ponto_base)
+    else:
+        # Fallback: usar pontos do posto (modelo antigo)
+        pontos_base = PontoBase.query.filter_by(posto_id=posto_id).all()
+        cartao_programa = None
+    
+    # Buscar itinerários (mantido para compatibilidade)
     itinerarios = []
     for i in range(len(pontos_base) - 1):
         itinerario = Itinerario.query.filter_by(
@@ -151,7 +268,7 @@ def posto(posto_id):
         if itinerario:
             itinerarios.append(itinerario)
     
-    return render_template('posto.html', posto=posto, pontos_base=pontos_base, itinerarios=itinerarios)
+    return render_template('posto.html', posto=posto, pontos_base=pontos_base, itinerarios=itinerarios, cartao_programa=cartao_programa, escala=escala)
 
 @app.route('/registrar_presenca/<int:ponto_id>', methods=['POST'])
 @login_required
@@ -245,7 +362,7 @@ if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 5000))
     debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
     
-    print(f"🚀 SegCond iniciando em http://{host}:{port}")
+    print(f"🚀 RBX-Security iniciando em http://{host}:{port}")
     print(f"📱 Para acessar externamente, use o IP da sua máquina: http://SEU_IP:{port}")
     print(f"🔧 Modo debug: {debug}")
     

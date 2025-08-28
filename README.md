@@ -1,10 +1,10 @@
-# 🏢 SegCond - Sistema de Vigilância para Condomínios
+# 🏢 RBX-Security - Sistema de Vigilância para Condomínios
 
 Sistema completo de vigilância condominial com aplicativo móvel PWA e painel administrativo web.
 
 ## 🚀 Visão Geral
 
-O **SegCond** é uma solução completa para gerenciar vigilância em condomínios, oferecendo:
+O **RBX-Security** é uma solução completa para gerenciar vigilância em condomínios, oferecendo:
 
 - 📱 **Aplicativo Móvel PWA** para vigilantes
 - 🖥️ **Painel Administrativo Web** para gestores
@@ -304,7 +304,7 @@ Este projeto está licenciado sob a **Licença MIT** - veja o arquivo [LICENSE](
 ✅ **Scripts de Instalação** - Automatizados  
 ✅ **Configuração de Rede** - Para acesso externo  
 
-**🚀 SegCond está pronto para uso em produção!**
+**🚀 RBX-Security está pronto para uso em produção!**
 
 ---
 

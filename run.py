@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script para executar o SegCond com informações de rede para acesso externo
+Script para executar o RBX-Security com informações de rede para acesso externo
 """
 
 import os
@@ -72,7 +72,7 @@ def main():
     """Função principal"""
     print("""
     ╔══════════════════════════════════════════════════════════════╗
-    ║                    SegCond - Runner                          ║
+    ║                  RBX-Security - Runner                       ║
     ║              Sistema de Vigilância para Condomínios          ║
     ╚══════════════════════════════════════════════════════════════╝
     """)
@@ -96,7 +96,7 @@ def main():
         print("   Execute: source venv/bin/activate")
         print()
     
-    print("🚀 Iniciando SegCond...")
+    print("🚀 Iniciando RBX-Security...")
     print("   Para parar: Ctrl+C")
     print("   Para acessar: Use a URL externa mostrada acima")
     print()
@@ -105,9 +105,9 @@ def main():
     try:
         subprocess.run([sys.executable, "app.py"], check=True)
     except KeyboardInterrupt:
-        print("\n👋 SegCond encerrado pelo usuário")
+        print("\n👋 RBX-Security encerrado pelo usuário")
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ Erro ao executar SegCond: {e}")
+        print(f"\n❌ Erro ao executar RBX-Security: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -7,16 +7,16 @@
 <div class="row">
     <!-- Estatísticas -->
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card dashboard-stat-card shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Total de Usuários</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalUsuarios ?? 0 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-primary-custom">{{ $totalUsuarios ?? 0 }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                        <i class="fas fa-users fa-2x dashboard-stat-icon"></i>
                     </div>
                 </div>
             </div>
@@ -24,16 +24,16 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
+        <div class="card dashboard-stat-card shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Vigilantes Ativos</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $vigilantesAtivos ?? 0 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-primary-custom">{{ $vigilantesAtivos ?? 0 }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-shield-alt fa-2x text-gray-300"></i>
+                        <i class="fas fa-shield-alt fa-2x dashboard-stat-icon"></i>
                     </div>
                 </div>
             </div>
@@ -41,18 +41,16 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
+        <div class="card dashboard-stat-card shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Postos de Trabalho</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalPostos ?? 0 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-primary-custom">{{ $totalPostos ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-map-marker-alt fa-2x text-gray-300"></i>
-                        </div>
+                        <i class="fas fa-map-marker-alt fa-2x dashboard-stat-icon"></i>
                     </div>
                 </div>
             </div>
@@ -60,16 +58,16 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card dashboard-stat-card shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Escalas Ativas</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $escalasAtivas ?? 0 }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-primary-custom">{{ $escalasAtivas ?? 0 }}</div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        <i class="fas fa-clock fa-2x dashboard-stat-icon"></i>
                     </div>
                 </div>
             </div>
@@ -83,7 +81,7 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Usuários Recentes</h6>
-                <a href="#" class="btn btn-sm btn-primary">
+                <a href="{{ route('admin.usuarios.create') }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-plus"></i> Novo Usuário
                 </a>
             </div>

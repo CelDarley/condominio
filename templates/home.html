@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Início - SegCond{% endblock %}
+{% block title %}Início - RBX-Security{% endblock %}
 
 {% block content %}
 <div class="home-container">
@@ -44,32 +44,51 @@
     </div>
 
     <div class="work-posts-section">
-        <h3>Postos de Trabalho para {{ ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'][hoje] }}</h3>
+        <h3 id="posts-title">Postos de Trabalho para {{ ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'][hoje] }}</h3>
         
-        {% if postos %}
-            <div class="work-posts">
-                {% for posto in postos %}
-                <div class="work-post-card">
-                    <div class="post-header">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <h4>{{ posto.nome }}</h4>
+        <div id="posts-container">
+            {% if postos %}
+                <div class="work-posts">
+                    {% for posto in postos %}
+                    <div class="work-post-card">
+                        <div class="post-header">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h4>{{ posto.nome }}</h4>
+                        </div>
+                        {% if posto.descricao %}
+                        <p class="post-description">{{ posto.descricao }}</p>
+                        {% endif %}
+                        
+                        {% if cartao_programa %}
+                        <div class="cartao-programa-info">
+                            <div class="cartao-header">
+                                <i class="fas fa-id-card"></i>
+                                <strong>{{ cartao_programa.nome }}</strong>
+                            </div>
+                            <div class="cartao-horario">
+                                <i class="fas fa-clock"></i>
+                                {{ cartao_programa.horario_inicio.strftime('%H:%M') }} - {{ cartao_programa.horario_fim.strftime('%H:%M') }}
+                            </div>
+                            {% if cartao_programa.descricao %}
+                            <p class="cartao-descricao">{{ cartao_programa.descricao }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('posto', posto_id=posto.id) }}" class="btn-view-post">
+                            <i class="fas fa-eye"></i>
+                            Ver Detalhes
+                        </a>
                     </div>
-                    {% if posto.descricao %}
-                    <p class="post-description">{{ posto.descricao }}</p>
-                    {% endif %}
-                    <a href="{{ url_for('posto', posto_id=posto.id) }}" class="btn-view-post">
-                        <i class="fas fa-eye"></i>
-                        Ver Detalhes
-                    </a>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="no-posts">
-                <i class="fas fa-calendar-times"></i>
-                <p>Nenhum posto de trabalho atribuído para {{ hoje_nome }}</p>
-            </div>
-        {% endif %}
+            {% else %}
+                <div class="no-posts">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>Nenhum posto de trabalho atribuído para este dia</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
     <div class="quick-actions">
@@ -117,7 +136,7 @@
 {% block extra_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const hoje = {{ hoje }};
+    const hoje = parseInt('{{ hoje }}');
     const dayButtons = document.querySelectorAll('.day-btn');
     
     // Marcar o dia atual
@@ -126,12 +145,78 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners para os botões de dia
     dayButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            const day = this.dataset.day;
-            // Aqui você pode implementar a lógica para carregar os postos do dia selecionado
+            const day = parseInt(this.dataset.day);
+            carregarPostosPorDia(day);
             dayButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
         });
     });
+    
+    // Função para carregar postos por dia
+    function carregarPostosPorDia(diaSemana) {
+        const diasNomes = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+        const postsTitle = document.getElementById('posts-title');
+        const postsContainer = document.getElementById('posts-container');
+        
+        postsTitle.textContent = `Postos de Trabalho para ${diasNomes[diaSemana]}`;
+        postsContainer.innerHTML = '<div class="loading">Carregando...</div>';
+        
+        fetch(`/api/postos_por_dia/${diaSemana}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.posto) {
+                    let cartaoInfo = '';
+                    if (data.cartao_programa) {
+                        cartaoInfo = `
+                            <div class="cartao-programa-info">
+                                <div class="cartao-header">
+                                    <i class="fas fa-id-card"></i>
+                                    <strong>${data.cartao_programa.nome}</strong>
+                                </div>
+                                <div class="cartao-horario">
+                                    <i class="fas fa-clock"></i>
+                                    ${data.cartao_programa.horario_inicio} - ${data.cartao_programa.horario_fim}
+                                </div>
+                                ${data.cartao_programa.descricao ? `<p class="cartao-descricao">${data.cartao_programa.descricao}</p>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    postsContainer.innerHTML = `
+                        <div class="work-posts">
+                            <div class="work-post-card">
+                                <div class="post-header">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <h4>${data.posto.nome}</h4>
+                                </div>
+                                ${data.posto.descricao ? `<p class="post-description">${data.posto.descricao}</p>` : ''}
+                                ${cartaoInfo}
+                                <a href="/posto/${data.posto.id}" class="btn-view-post">
+                                    <i class="fas fa-eye"></i>
+                                    Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    postsContainer.innerHTML = `
+                        <div class="no-posts">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Nenhum posto de trabalho atribuído para este dia</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar postos:', error);
+                postsContainer.innerHTML = `
+                    <div class="no-posts">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erro ao carregar postos de trabalho</p>
+                    </div>
+                `;
+            });
+    }
     
     // Modal de aviso
     const modal = document.getElementById('aviso-modal');

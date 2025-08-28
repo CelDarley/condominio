@@ -1,6 +1,6 @@
 {
-    "name": "SegCond - Sistema de Vigilância",
-    "short_name": "SegCond",
+      "name": "RBX-Security - Sistema de Vigilância",
+  "short_name": "RBX-Security",
     "description": "Sistema de vigilância para condomínios com controle de postos de trabalho e pontos base",
     "start_url": "/",
     "display": "standalone",

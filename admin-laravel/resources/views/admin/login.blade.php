@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SegCond Admin</title>
+    <title>Login - RBX-Security Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -72,7 +72,7 @@
                 <div class="login-card">
                     <div class="login-header">
                         <i class="fas fa-shield-alt fa-3x mb-3"></i>
-                        <h3>SegCond Admin</h3>
+                        <h3>RBX-Security Admin</h3>
                         <p class="mb-0">Sistema de Segurança</p>
                     </div>
                     <div class="login-body">
