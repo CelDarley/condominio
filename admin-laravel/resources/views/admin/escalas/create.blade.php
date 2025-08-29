@@ -63,10 +63,15 @@
                     <div class="card mb-4">
                         <div class="card-header">
                             <h6 class="m-0 font-weight-bold text-info">
-                                <i class="fas fa-calendar-week"></i> Selecionar Dias da Semana
+                                <i class="fas fa-calendar-week"></i> Selecionar Dias da Semana <span class="text-danger">*</span>
                             </h6>
                         </div>
                         <div class="card-body">
+                            @error('dias')
+                                <div class="alert alert-danger mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>{{ $message }}
+                                </div>
+                            @enderror
                             <div class="row">
                                 @foreach($diasSemana as $numero => $nome)
                                 <div class="col-md-6 col-lg-4 mb-3">
@@ -123,8 +128,8 @@
                         <strong>Como usar:</strong>
                         <ul class="mb-0 mt-2">
                             <li>Selecione o profissional e o posto de trabalho</li>
-                            <li>Marque os dias da semana desejados</li>
-                            <li>Para cada dia, você pode escolher um cartão programa específico (opcional)</li>
+                            <li><strong>Marque pelo menos um dia da semana</strong> (obrigatório)</li>
+                            <li>Para cada dia selecionado, você pode escolher um cartão programa específico (opcional)</li>
                             <li>Cada profissional pode ter apenas uma escala ativa por dia</li>
                         </ul>
                     </div>
@@ -243,9 +248,32 @@ document.getElementById('form-escala').addEventListener('submit', function(e) {
     const diasSelecionados = document.querySelectorAll('.dia-checkbox:checked').length;
     console.log('Dias selecionados:', diasSelecionados);
     
+    // Remover alertas de erro anteriores
+    const alertasAnteriores = document.querySelectorAll('.alert-validation-error');
+    alertasAnteriores.forEach(alerta => alerta.remove());
+    
     if (diasSelecionados === 0) {
         e.preventDefault();
-        alert('Selecione pelo menos um dia da semana.');
+        
+        // Criar alerta visual no formulário
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-validation-error mt-3';
+        alertDiv.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Selecione pelo menos um dia da semana antes de continuar.';
+        
+        // Inserir o alerta antes dos botões
+        const botoes = document.querySelector('.d-flex.justify-content-between');
+        botoes.parentNode.insertBefore(alertDiv, botoes);
+        
+        // Scroll para o alerta
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Destacar a seção de dias
+        const cardDias = document.querySelector('.card.mb-4');
+        cardDias.style.border = '2px solid #dc3545';
+        setTimeout(() => {
+            cardDias.style.border = '';
+        }, 3000);
+        
         return false;
     }
     

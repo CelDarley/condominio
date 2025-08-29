@@ -54,13 +54,33 @@ class EscalaController extends Controller
             'session_id' => session()->getId()
         ]);
 
+        // Validação básica
         $request->validate([
             'usuario_id' => 'required|exists:usuario,id',
             'posto_trabalho_id' => 'required|exists:posto_trabalho,id',
-            'dias' => 'required|array|min:1',
-            'dias.*.ativo' => 'required',
-            'dias.*.cartao_programa_id' => 'nullable|exists:cartao_programas,id'
+            'dias' => 'required|array',
         ]);
+
+        // Validação customizada: pelo menos um dia deve estar selecionado
+        $diasSelecionados = collect($request->dias ?? [])
+            ->filter(function ($dia) {
+                return isset($dia['ativo']) && $dia['ativo'];
+            });
+
+        if ($diasSelecionados->isEmpty()) {
+            return back()->withErrors([
+                'dias' => 'Selecione pelo menos um dia da semana.'
+            ])->withInput();
+        }
+
+        // Validar cartões programa apenas para dias selecionados
+        foreach ($request->dias as $diaSemana => $dados) {
+            if (isset($dados['ativo']) && $dados['ativo'] && isset($dados['cartao_programa_id'])) {
+                $request->validate([
+                    "dias.{$diaSemana}.cartao_programa_id" => 'exists:cartao_programas,id'
+                ]);
+            }
+        }
 
         \Log::info('Validação passou com sucesso');
 
