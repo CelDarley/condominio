@@ -15,7 +15,9 @@ class PostoTrabalhoController extends Controller
 
     public function index()
     {
-        $postos = PostoTrabalho::with(['pontosBase', 'cartoesPrograma'])->get();
+        $postos = PostoTrabalho::with(['pontosBase', 'cartoesPrograma'])
+            ->where('ativo', true)
+            ->get();
         return view('admin.postos.index', compact('postos'));
     }
 
@@ -92,25 +94,47 @@ class PostoTrabalhoController extends Controller
             ]);
 
             // Verificar se o posto tem pontos base ativos
-            $pontosAtivos = $posto->pontosBase()->ativos()->count();
+            $pontosAtivos = $posto->pontosBase()->where('ativo', true)->count();
             if ($pontosAtivos > 0) {
                 \Log::warning('Tentativa de desativar posto com pontos base ativos', [
                     'posto_id' => $posto->id,
                     'pontos_ativos' => $pontosAtivos
                 ]);
+                
+                return redirect()->route('admin.postos.index')
+                    ->with('error', "Não é possível desativar este posto pois ele possui {$pontosAtivos} ponto(s) base ativo(s). Desative os pontos base primeiro.");
             }
 
             // Verificar se o posto tem cartões programa ativos
-            $cartoesAtivos = $posto->cartoesPrograma()->ativos()->count();
+            $cartoesAtivos = $posto->cartoesPrograma()->where('ativo', true)->count();
             if ($cartoesAtivos > 0) {
                 \Log::warning('Tentativa de desativar posto com cartões programa ativos', [
                     'posto_id' => $posto->id,
                     'cartoes_ativos' => $cartoesAtivos
                 ]);
+                
+                return redirect()->route('admin.postos.index')
+                    ->with('error', "Não é possível desativar este posto pois ele possui {$cartoesAtivos} cartão(ões) programa ativo(s). Desative os cartões primeiro.");
+            }
+
+            // Verificar se o posto tem escalas ativas
+            $escalasAtivas = $posto->escalas()->where('ativo', true)->count();
+            if ($escalasAtivas > 0) {
+                \Log::warning('Tentativa de desativar posto com escalas ativas', [
+                    'posto_id' => $posto->id,
+                    'escalas_ativas' => $escalasAtivas
+                ]);
+                
+                return redirect()->route('admin.postos.index')
+                    ->with('error', "Não é possível desativar este posto pois ele possui {$escalasAtivas} escala(s) ativa(s). Desative as escalas primeiro.");
             }
 
             // Soft delete - apenas desativa
-            $posto->update(['ativo' => false]);
+            $resultado = $posto->update(['ativo' => false]);
+
+            if (!$resultado) {
+                throw new \Exception('Falha ao atualizar registro no banco de dados');
+            }
 
             \Log::info('Posto de trabalho desativado com sucesso', [
                 'posto_id' => $posto->id,
@@ -122,8 +146,8 @@ class PostoTrabalhoController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Erro ao desativar posto de trabalho', [
-                'posto_id' => $posto->id,
                 'error' => $e->getMessage(),
+                'posto_id' => $posto->id,
                 'trace' => $e->getTraceAsString()
             ]);
 

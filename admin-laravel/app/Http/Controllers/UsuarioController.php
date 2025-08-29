@@ -84,27 +84,40 @@ class UsuarioController extends Controller
 
     public function update(Request $request, Usuario $usuario)
     {
+        \Log::info('Iniciando update de usuário', [
+            'usuario_id' => $usuario->id,
+            'dados_recebidos' => $request->all()
+        ]);
+
         $request->validate([
             'nome' => 'required|string|max:100',
             'email' => 'required|email|max:120|unique:usuario,email,' . $usuario->id,
             'telefone' => 'nullable|string|max:20',
             'tipo' => 'required|in:vigilante,morador,admin',
-            'ativo' => 'boolean'
+            'nova_senha' => 'nullable|string|min:6'
         ]);
+
+        \Log::info('Validação passou');
 
         $data = [
             'nome' => $request->nome,
             'email' => $request->email,
             'telefone' => $request->telefone,
             'tipo' => $request->tipo,
-            'ativo' => $request->has('ativo')
+            'ativo' => $request->has('ativo') ? 1 : 0,
+            'data_atualizacao' => now()
         ];
 
         if ($request->filled('nova_senha')) {
             $data['senha_hash'] = Hash::make($request->nova_senha);
+            \Log::info('Nova senha será atualizada');
         }
 
-        $usuario->update($data);
+        \Log::info('Dados a serem atualizados', $data);
+
+        $resultado = $usuario->update($data);
+        
+        \Log::info('Resultado do update', ['sucesso' => $resultado]);
 
         return redirect()->route('admin.usuarios.index')
             ->with('success', 'Usuário atualizado com sucesso!');

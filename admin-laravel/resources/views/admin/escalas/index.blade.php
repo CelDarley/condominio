@@ -63,6 +63,10 @@
                                             <a href="{{ route('admin.escalas.edit', $escala) }}" class="btn btn-warning btn-sm" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <button type="button" class="btn btn-danger btn-sm" title="Excluir" 
+                                                    onclick="confirmarExclusaoEscala({{ $escala->id }}, '{{ $escala->usuario->nome ?? 'N/A' }}', '{{ $escala->getDiaSemanaNome() }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -83,4 +87,87 @@
         </div>
     </div>
 </div>
+
+<!-- Formulário de exclusão (oculto) -->
+<form id="form-exclusao-escala" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
+<!-- Modal de confirmação para exclusão de escala -->
+<div class="modal fade" id="modalConfirmacaoEscala" tabindex="-1" aria-labelledby="modalConfirmacaoEscalaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalConfirmacaoEscalaLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    <h6>Tem certeza que deseja excluir esta escala?</h6>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Detalhes da Escala:</strong>
+                        </div>
+                        <div class="col-6">
+                            <strong>Usuário:</strong> <span id="escala-usuario"></span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Dia:</strong> <span id="escala-dia"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Nota:</strong> A escala será desativada (soft delete) e não aparecerá mais nas listagens, mas os dados não serão perdidos permanentemente.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-confirmar-exclusao-escala">
+                    <i class="fas fa-trash"></i> Confirmar Exclusão
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarExclusaoEscala(escalaId, nomeUsuario, diaSemana) {
+    // Preencher dados no modal
+    document.getElementById('escala-usuario').textContent = nomeUsuario;
+    document.getElementById('escala-dia').textContent = diaSemana;
+
+    // Configurar formulário de exclusão
+    const form = document.getElementById('form-exclusao-escala');
+    form.action = `/admin/escalas/${escalaId}`;
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalConfirmacaoEscala'));
+    modal.show();
+}
+
+// Evento de confirmação
+document.getElementById('btn-confirmar-exclusao-escala').addEventListener('click', function() {
+    // Mostrar loading
+    this.disabled = true;
+    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+
+    // Submeter formulário
+    document.getElementById('form-exclusao-escala').submit();
+});
+
+// Log para debug
+console.log('Script de exclusão de escalas carregado');
+</script>
 @endsection 

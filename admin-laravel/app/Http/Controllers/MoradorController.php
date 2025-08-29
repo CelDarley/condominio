@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Hash;
 
 class MoradorController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('admin');
+    }
+
     public function index()
     {
         $moradores = Morador::with('veiculos')->orderBy('nome')->get();

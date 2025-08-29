@@ -1,61 +1,210 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema de Gestão de Condomínio - Admin Laravel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema completo de gestão de segurança para condomínios com múltiplas aplicações integradas.
 
-## About Laravel
+## 🏗️ Arquitetura do Sistema
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Este projeto faz parte de um sistema distribuído composto por:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **admin-laravel** - Painel administrativo (este repositório)
+- **app-vigilante** - Aplicação mobile para vigilantes  
+- **app-morador** - Aplicação mobile para moradores
+- **relatorio-camera** - Sistema de relatórios de câmeras
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Funcionalidades Principais
 
-## Learning Laravel
+### 👑 Administração
+- Dashboard administrativo completo
+- Gestão de usuários (admins, vigilantes, moradores)
+- Controle de postos de trabalho e pontos base
+- Criação e gestão de cartões programa
+- Sistema de escalas semanais
+- Escala diária com ajustes e substituições
+- Gestão de moradores e veículos
+- Autenticação centralizada
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🔐 Segurança
+- Autenticação robusta com middleware
+- Controle de acesso por perfis
+- Logs detalhados de atividades
+- Validação de dados em todas as operações
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 📱 Integração
+- API para aplicações mobile
+- Sistema centralizado de usuários
+- Sincronização de escalas em tempo real
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Tecnologias Utilizadas
 
-## Laravel Sponsors
+- **Laravel 11** - Framework PHP
+- **MySQL** - Banco de dados
+- **Bootstrap 5** - Interface responsiva
+- **JavaScript** - Interatividade frontend
+- **Font Awesome** - Ícones
+- **Blade Templates** - Sistema de templates
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ⚙️ Instalação e Configuração
 
-### Premium Partners
+### 1. Pré-requisitos
+```bash
+- PHP 8.2+
+- Composer
+- MySQL 5.7+
+- Node.js e NPM (opcional)
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 2. Clonagem e Dependências
+```bash
+git clone <repository-url>
+cd admin-laravel
+composer install
+```
 
-## Contributing
+### 3. Configuração do Ambiente
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Configure as variáveis no `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=segcond_db
+DB_USERNAME=segcond
+DB_PASSWORD=segcond()123
 
-## Code of Conduct
+AUTH_MODEL=App\Models\Usuario
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 4. Banco de Dados
+```bash
+# Executar migrações
+php artisan migrate
 
-## Security Vulnerabilities
+# Popular banco com dados de exemplo
+php artisan db:seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 5. Iniciar Servidor
+```bash
+php artisan serve
+```
 
-## License
+O sistema estará disponível em: `http://localhost:8000`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🔑 Credenciais Padrão
+
+### Administrador
+- **Email:** admin@segcond.local
+- **Senha:** admin123
+
+### Vigilantes de Exemplo
+- **Email:** joao@segcond.local, maria@segcond.local, etc.
+- **Senha:** 123456
+
+### Moradores de Exemplo
+- **Email:** roberto@email.com, fernanda@email.com, etc.
+- **Senha:** 123456
+
+## 📊 Estrutura do Banco de Dados
+
+### Tabelas Principais
+- `usuario` - Usuários do sistema (admin, vigilantes, moradores)
+- `posto_trabalho` - Postos de trabalho para vigilância
+- `ponto_base` - Pontos específicos dentro dos postos
+- `cartao_programas` - Programas de rondas
+- `escala` - Escalas semanais dos vigilantes
+- `escala_diaria` - Ajustes diários nas escalas
+- `moradores` - Dados dos moradores
+- `veiculos` - Veículos dos moradores
+
+## 🎯 Funcionalidades Detalhadas
+
+### Sistema de Escalas
+- **Escalas Semanais:** Programação base para cada vigilante
+- **Escala Diária:** Ajustes pontuais com substituições
+- **Calendário Visual:** Interface intuitiva para gestão
+- **Filtros Avançados:** Visualização por vigilante
+
+### Gestão de Postos
+- **Postos de Trabalho:** Áreas de responsabilidade
+- **Pontos Base:** Locais específicos para ronda
+- **Coordenadas GPS:** Localização precisa dos pontos
+- **Cartões Programa:** Rotinas predefinidas
+
+### Painel Administrativo
+- **Dashboard:** Visão geral do sistema
+- **Usuários:** CRUD completo com perfis
+- **Moradores:** Gestão de residentes e veículos
+- **Relatórios:** Análises e estatísticas
+
+## 🔄 Integração com Outros Apps
+
+### API Endpoints
+- `/api/escalas-vigilante/{id}/{ano}/{mes}` - Escalas por vigilante
+- `/admin/escala-diaria/calendario` - Dados do calendário
+- `/admin/escala-diaria/cartoes-programa` - Cartões por posto
+
+### Autenticação Centralizada
+Todas as aplicações utilizam a tabela `usuario` única:
+- Tipo: admin, vigilante, morador
+- Criptografia segura de senhas
+- Controle de status ativo/inativo
+
+## 🧪 Seeders Disponíveis
+
+Execute `php artisan db:seed` para popular:
+- ✅ 1 Administrador + 5 Vigilantes
+- ✅ 5 Moradores com veículos
+- ✅ 3 Postos com pontos base
+- ✅ Cartões programa (diurno/noturno)
+- ✅ Escalas de exemplo distribuídas
+
+## 🐛 Troubleshooting
+
+### Problemas Comuns
+
+**Erro de migração:** 
+```bash
+php artisan migrate:fresh --seed
+```
+
+**Cache de rotas:**
+```bash
+php artisan route:clear
+php artisan config:clear
+php artisan cache:clear
+```
+
+**Permissões de storage:**
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+
+## 📝 Logs e Debug
+
+Logs importantes em:
+- `storage/logs/laravel.log` - Logs gerais
+- Console do navegador - Debug JavaScript
+- Network tab - Requisições AJAX
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto é propriedade privada. Todos os direitos reservados.
+
+## 📞 Suporte
+
+Para suporte técnico ou dúvidas sobre o sistema, entre em contato com a equipe de desenvolvimento.
+
+---
+
+**Desenvolvido com ❤️ para segurança condominial**

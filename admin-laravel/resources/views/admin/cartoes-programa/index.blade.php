@@ -66,8 +66,10 @@
                                     </td>
                                     <td>
                                         <small class="text-muted">
-                                            {{ $cartao->horario_inicio ? \Carbon\Carbon::parse($cartao->horario_inicio)->format('H:i') : '08:00' }} - 
-                                            {{ $cartao->horario_fim ? \Carbon\Carbon::parse($cartao->horario_fim)->format('H:i') : '18:00' }}
+                                            {{ $cartao->getHorarioInicioFormatado() }} - {{ $cartao->getHorarioFimFormatado() }}
+                                            @if($cartao->horario_fim <= $cartao->horario_inicio)
+                                                <i class="fas fa-moon text-info ml-1" title="Turno noturno"></i>
+                                            @endif
                                         </small>
                                     </td>
                                     <td>

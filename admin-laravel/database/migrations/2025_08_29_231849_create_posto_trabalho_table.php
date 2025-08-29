@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('veiculos', function (Blueprint $table) {
+        Schema::create('posto_trabalho', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('morador_id')->constrained('moradores')->onDelete('cascade');
-            $table->string('marca');
-            $table->string('modelo');
-            $table->string('placa')->unique();
-            $table->string('cor');
             $table->timestamps();
         });
     }
@@ -27,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('veiculos');
+        Schema::dropIfExists('posto_trabalho');
     }
 };

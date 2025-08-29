@@ -114,6 +114,10 @@
                                 @error('horario_fim')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-moon text-info"></i>
+                                    <strong>Turnos noturnos:</strong> Se o horário de fim for menor que o de início, o sistema entenderá que o turno termina no dia seguinte (ex: 18:00 às 06:00).
+                                </small>
                                 <small class="form-text text-muted">Quando termina o período de atividade</small>
                             </div>
                         </div>
@@ -218,8 +222,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const inicio = horaInicio.value;
         const fim = horaFim.value;
         
-        if (inicio && fim && inicio >= fim) {
-            horaFim.setCustomValidity('O horário de fim deve ser posterior ao horário de início');
+        if (inicio && fim) {
+            // Se o horário de fim for menor que o início, assumimos que é no dia seguinte
+            // Isso é válido para turnos noturnos (ex: 18:00 às 06:00)
+            // Apenas validamos se não são iguais
+            if (inicio === fim) {
+                horaFim.setCustomValidity('O horário de fim não pode ser igual ao horário de início');
+            } else {
+                horaFim.setCustomValidity('');
+            }
         } else {
             horaFim.setCustomValidity('');
         }

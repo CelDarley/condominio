@@ -137,4 +137,78 @@ class CartaoPrograma extends Model
 
         return $novoCartao;
     }
+
+    /**
+     * Retorna o horário de início formatado
+     */
+    public function getHorarioInicioFormatado(): string
+    {
+        return $this->horario_inicio ? $this->horario_inicio->format('H:i') : '--:--';
+    }
+
+    /**
+     * Retorna o horário de fim formatado
+     */
+    public function getHorarioFimFormatado(): string
+    {
+        return $this->horario_fim ? $this->horario_fim->format('H:i') : '--:--';
+    }
+
+    /**
+     * Calcula a duração do turno em minutos considerando turnos noturnos
+     */
+    public function getDuracaoTurno(): int
+    {
+        if (!$this->horario_inicio || !$this->horario_fim) {
+            return 0;
+        }
+
+        $inicio = $this->horario_inicio;
+        $fim = $this->horario_fim;
+
+        // Se o horário de fim é menor que o início, é um turno noturno
+        if ($fim <= $inicio) {
+            // Adiciona 24 horas (1440 minutos) ao horário de fim
+            $inicioMinutos = ($inicio->hour * 60) + $inicio->minute;
+            $fimMinutos = (($fim->hour + 24) * 60) + $fim->minute;
+            return $fimMinutos - $inicioMinutos;
+        }
+
+        // Turno normal (mesmo dia)
+        $inicioMinutos = ($inicio->hour * 60) + $inicio->minute;
+        $fimMinutos = ($fim->hour * 60) + $fim->minute;
+        return $fimMinutos - $inicioMinutos;
+    }
+
+    /**
+     * Retorna uma descrição formatada do turno
+     */
+    public function getDescricaoTurno(): string
+    {
+        $inicio = $this->getHorarioInicioFormatado();
+        $fim = $this->getHorarioFimFormatado();
+        $duracao = $this->getDuracaoTurno();
+        
+        $horas = floor($duracao / 60);
+        $minutos = $duracao % 60;
+        
+        $duracaoFormatada = $horas > 0 ? "{$horas}h" : "";
+        if ($minutos > 0) {
+            $duracaoFormatada .= $horas > 0 ? " {$minutos}min" : "{$minutos}min";
+        }
+        
+        // Detectar se é turno noturno
+        $turnoNoturno = $this->horario_fim <= $this->horario_inicio;
+        $descricao = "{$inicio} às {$fim}";
+        
+        if ($turnoNoturno) {
+            $descricao .= " (próximo dia)";
+        }
+        
+        if ($duracaoFormatada) {
+            $descricao .= " - {$duracaoFormatada}";
+        }
+        
+        return $descricao;
+    }
 }

@@ -14,7 +14,7 @@ class PontoBase extends Model
 
     protected $table = 'ponto_base';
     protected $primaryKey = 'id';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'posto_id',

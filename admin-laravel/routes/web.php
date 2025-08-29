@@ -34,9 +34,21 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('usuarios/{usuario}/toggle-status', [UsuarioController::class, 'toggleStatus'])->name('usuarios.toggle-status');
     Route::post('usuarios/{usuario}/deactivate', [UsuarioController::class, 'deactivate'])->name('usuarios.deactivate');
     Route::delete('usuarios/{usuario}/force-delete', [UsuarioController::class, 'forceDelete'])->name('usuarios.force-delete');
+    
+    // Rota de teste para debug
+    Route::get('usuarios/{usuario}/test-update', function($id) {
+        $usuario = \App\Models\Usuario::findOrFail($id);
+        return response()->json([
+            'usuario' => $usuario,
+            'fillable' => $usuario->getFillable(),
+            'can_update' => true
+        ]);
+    })->name('usuarios.test-update');
 
     // Gerenciamento de Moradores
-    Route::resource('moradores', MoradorController::class);
+    Route::resource('moradores', MoradorController::class)->parameters([
+        'moradores' => 'morador'
+    ]);
     Route::post('moradores/{morador}/toggle-status', [MoradorController::class, 'toggleStatus'])->name('moradores.toggle-status');
     Route::patch('moradores/{morador}/change-password', [MoradorController::class, 'changePassword'])->name('moradores.change-password');
     Route::post('moradores/{morador}/add-veiculo', [MoradorController::class, 'addVeiculo'])->name('moradores.add-veiculo');
@@ -66,6 +78,17 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::patch('cartoes-programa/{cartaoPrograma}/reordenar-pontos', [CartaoProgramaController::class, 'reordenarPontos'])->name('cartoes-programa.reordenar-pontos');
     Route::post('cartoes-programa/{cartaoPrograma}/duplicar', [CartaoProgramaController::class, 'duplicar'])->name('cartoes-programa.duplicar');
     Route::get('cartoes-programa/por-posto/{posto}', [CartaoProgramaController::class, 'porPosto'])->name('cartoes-programa.por-posto');
+
+    // Gerenciamento de Escala Diária
+    Route::get('escala-diaria', [App\Http\Controllers\EscalaDiariaController::class, 'index'])->name('escala-diaria.index');
+    Route::get('escala-diaria/calendario', [App\Http\Controllers\EscalaDiariaController::class, 'calendario'])->name('escala-diaria.calendario');
+    Route::post('escala-diaria', [App\Http\Controllers\EscalaDiariaController::class, 'store'])->name('escala-diaria.store');
+    Route::put('escala-diaria/{escalaDiaria}', [App\Http\Controllers\EscalaDiariaController::class, 'update'])->name('escala-diaria.update');
+    Route::delete('escala-diaria/{escalaDiaria}', [App\Http\Controllers\EscalaDiariaController::class, 'destroy'])->name('escala-diaria.destroy');
+    Route::get('escala-diaria/cartoes-programa', [App\Http\Controllers\EscalaDiariaController::class, 'cartoesPrograma'])->name('escala-diaria.cartoes-programa');
+    
+    // API para filtro de vigilante
+    Route::get('api/escalas-vigilante/{vigilante}/{ano}/{mes}', [App\Http\Controllers\EscalaDiariaController::class, 'escalasVigilante'])->name('api.escalas-vigilante');
     
     // API Routes
     Route::get('api/escalas/{usuario}/{dia}', [EscalaController::class, 'getEscalasByUsuario'])->name('api.escalas.usuario');

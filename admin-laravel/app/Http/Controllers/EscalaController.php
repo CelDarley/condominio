@@ -47,41 +47,124 @@ class EscalaController extends Controller
 
     public function store(Request $request)
     {
+        // Log para debug
+        \Log::info('EscalaController::store chamado', [
+            'request_data' => $request->all(),
+            'user_id' => auth()->id(),
+            'session_id' => session()->getId()
+        ]);
+
         $request->validate([
             'usuario_id' => 'required|exists:usuario,id',
-            'posto_trabalho_id' => 'required|exists:posto_trabalho,id', // Corrigido nome do campo
-            'cartao_programa_id' => 'nullable|exists:cartao_programas,id', // Novo campo
-            'dia_semana' => 'required|integer|between:0,6'
+            'posto_trabalho_id' => 'required|exists:posto_trabalho,id',
+            'dias' => 'required|array|min:1',
+            'dias.*.ativo' => 'required',
+            'dias.*.cartao_programa_id' => 'nullable|exists:cartao_programas,id'
         ]);
 
-        // Verificar se o cartão programa pertence ao posto selecionado
-        if ($request->cartao_programa_id) {
-            $cartaoPrograma = \App\Models\CartaoPrograma::find($request->cartao_programa_id);
-            if ($cartaoPrograma && $cartaoPrograma->posto_trabalho_id != $request->posto_trabalho_id) {
-                return back()->withErrors(['cartao_programa_id' => 'O cartão programa selecionado não pertence ao posto de trabalho escolhido.']);
+        \Log::info('Validação passou com sucesso');
+
+        $usuario_id = $request->usuario_id;
+        $posto_trabalho_id = $request->posto_trabalho_id;
+        $dias = $request->dias;
+        
+        \Log::info('Dados processados', [
+            'usuario_id' => $usuario_id,
+            'posto_trabalho_id' => $posto_trabalho_id,
+            'dias_count' => count($dias)
+        ]);
+        
+        $escalasCreated = 0;
+        $errors = [];
+
+        \DB::beginTransaction();
+        try {
+            foreach ($dias as $dia_semana => $dadosDia) {
+                if (!isset($dadosDia['ativo']) || !$dadosDia['ativo']) {
+                    continue; // Pular dias não selecionados
+                }
+
+                // Verificar se o cartão programa pertence ao posto selecionado
+                if (!empty($dadosDia['cartao_programa_id'])) {
+                    $cartaoPrograma = \App\Models\CartaoPrograma::find($dadosDia['cartao_programa_id']);
+                    if ($cartaoPrograma && $cartaoPrograma->posto_trabalho_id != $posto_trabalho_id) {
+                        $errors[] = "O cartão programa selecionado para {$this->getNomeDiaSemana($dia_semana)} não pertence ao posto escolhido.";
+                        continue;
+                    }
+                }
+
+                // Verificar se já existe escala para este usuário neste dia
+                $escalaExistente = Escala::where('usuario_id', $usuario_id)
+                    ->where('dia_semana', $dia_semana)
+                    ->where('ativo', true)
+                    ->first();
+
+                if ($escalaExistente) {
+                    $errors[] = "Já existe uma escala ativa para este usuário em {$this->getNomeDiaSemana($dia_semana)}.";
+                    continue;
+                }
+
+                // Criar escala
+                Escala::create([
+                    'usuario_id' => $usuario_id,
+                    'posto_trabalho_id' => $posto_trabalho_id,
+                    'cartao_programa_id' => $dadosDia['cartao_programa_id'] ?: null,
+                    'dia_semana' => $dia_semana,
+                    'ativo' => true
+                ]);
+
+                $escalasCreated++;
             }
+
+            if ($escalasCreated === 0) {
+                \DB::rollback();
+                if (!empty($errors)) {
+                    return back()->withErrors(['dias' => implode(' ', $errors)])->withInput();
+                } else {
+                    return back()->withErrors(['dias' => 'Nenhuma escala foi criada. Selecione pelo menos um dia válido.'])->withInput();
+                }
+            }
+
+            \DB::commit();
+
+            $message = "Criada(s) {$escalasCreated} escala(s) com sucesso!";
+            if (!empty($errors)) {
+                $message .= " Avisos: " . implode(' ', $errors);
+            }
+
+            \Log::info('Redirecionando com sucesso', [
+                'message' => $message,
+                'escalas_created' => $escalasCreated
+            ]);
+
+            return redirect()->route('admin.escalas.index')->with('success', $message);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Erro ao criar escalas', [
+                'error' => $e->getMessage(),
+                'usuario_id' => $usuario_id,
+                'posto_trabalho_id' => $posto_trabalho_id,
+                'dias' => $dias
+            ]);
+
+            return back()->withErrors(['error' => 'Erro ao criar escalas: ' . $e->getMessage()])->withInput();
         }
+    }
 
-        // Verificar se já existe escala para este usuário neste dia
-        $escalaExistente = Escala::where('usuario_id', $request->usuario_id)
-            ->where('dia_semana', $request->dia_semana)
-            ->where('ativo', true)
-            ->first();
-
-        if ($escalaExistente) {
-            return back()->withErrors(['dia_semana' => 'Já existe uma escala ativa para este usuário neste dia da semana.']);
-        }
-
-        Escala::create([
-            'usuario_id' => $request->usuario_id,
-            'posto_trabalho_id' => $request->posto_trabalho_id, // Corrigido nome do campo
-            'cartao_programa_id' => $request->cartao_programa_id, // Novo campo
-            'dia_semana' => $request->dia_semana,
-            'ativo' => true
-        ]);
-
-        return redirect()->route('admin.escalas.index')
-            ->with('success', 'Escala criada com sucesso!');
+    private function getNomeDiaSemana($numero)
+    {
+        $dias = [
+            0 => 'Segunda-feira',
+            1 => 'Terça-feira', 
+            2 => 'Quarta-feira',
+            3 => 'Quinta-feira',
+            4 => 'Sexta-feira',
+            5 => 'Sábado',
+            6 => 'Domingo'
+        ];
+        
+        return $dias[$numero] ?? "Dia {$numero}";
     }
 
     public function show(Escala $escala)
@@ -115,7 +198,8 @@ class EscalaController extends Controller
     {
         $request->validate([
             'usuario_id' => 'required|exists:usuario,id',
-            'posto_id' => 'required|exists:posto_trabalho,id',
+            'posto_trabalho_id' => 'required|exists:posto_trabalho,id',
+            'cartao_programa_id' => 'nullable|exists:cartao_programa,id',
             'dia_semana' => 'required|integer|between:0,6',
             'ativo' => 'boolean'
         ]);
@@ -133,7 +217,8 @@ class EscalaController extends Controller
 
         $escala->update([
             'usuario_id' => $request->usuario_id,
-            'posto_id' => $request->posto_id,
+            'posto_trabalho_id' => $request->posto_trabalho_id,
+            'cartao_programa_id' => $request->cartao_programa_id ?: null,
             'dia_semana' => $request->dia_semana,
             'ativo' => $request->has('ativo')
         ]);

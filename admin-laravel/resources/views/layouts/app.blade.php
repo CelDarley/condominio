@@ -52,7 +52,12 @@
                                 Escalas
                             </a>
                         </li>
-
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is("admin/escala-diaria*") ? "active" : "" }}" href="{{ route("admin.escala-diaria.index") }}">
+                                <i class="fas fa-calendar-day me-2"></i>
+                                Escala Diária
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is("admin/cartoes-programa*") ? "active" : "" }}" href="{{ route("admin.cartoes-programa.index") }}">
                                 <i class="fas fa-id-card me-2"></i>
@@ -99,16 +104,38 @@
 
                 @if(session("success"))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session("success") }}
+                        <i class="fas fa-check-circle me-2"></i>{{ session("success") }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                    <script>
+                        console.log('Mensagem de sucesso exibida: {{ session("success") }}');
+                    </script>
                 @endif
 
                 @if(session("error"))
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ session("error") }}
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ session("error") }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                    <script>
+                        console.log('Mensagem de erro exibida: {{ session("error") }}');
+                    </script>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Erro de validação:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <script>
+                        console.log('Erros de validação exibidos:', @json($errors->all()));
+                    </script>
                 @endif
 
                 @yield("content")

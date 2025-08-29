@@ -66,13 +66,17 @@
                                 <td>
                                     @if($cartaoPrograma->horario_inicio && $cartaoPrograma->horario_fim)
                                         @php
-                                            $inicio = \Carbon\Carbon::parse($cartaoPrograma->horario_inicio);
-                                            $fim = \Carbon\Carbon::parse($cartaoPrograma->horario_fim);
-                                            $duracao = $fim->diffInMinutes($inicio);
+                                            $duracao = $cartaoPrograma->getDuracaoTurno();
                                             $horas = intval($duracao / 60);
                                             $minutos = $duracao % 60;
+                                            $turnoNoturno = $cartaoPrograma->horario_fim <= $cartaoPrograma->horario_inicio;
                                         @endphp
                                         {{ $horas }}h {{ $minutos }}min
+                                        @if($turnoNoturno)
+                                            <span class="badge badge-info ml-2">
+                                                <i class="fas fa-moon"></i> Turno noturno
+                                            </span>
+                                        @endif
                                     @else
                                         Não calculado
                                     @endif
