@@ -83,7 +83,7 @@
                                         </span>
                                         <small class="text-muted">
                                             <i class="fas fa-clock me-1"></i>
-                                            {{ $alerta->created_at->diffForHumans() }}
+                                            {{ $alerta->created_at ? $alerta->created_at->diffForHumans() : 'Data não disponível' }}
                                         </small>
                                     </div>
                                     
@@ -98,7 +98,7 @@
                                                 <div class="border-start border-2 ps-3 mb-2">
                                                     <small class="text-muted">
                                                         <strong>{{ $comentario->morador->nome }}</strong> 
-                                                        disse há {{ $comentario->created_at->diffForHumans() }}:
+                                                        disse há {{ $comentario->created_at ? $comentario->created_at->diffForHumans() : 'data não disponível' }}:
                                                     </small>
                                                     <p class="mb-1 small">{{ $comentario->conteudo }}</p>
                                                 </div>
@@ -228,7 +228,7 @@
                                     @endif
                                     <small class="text-muted">
                                         <i class="fas fa-clock me-1"></i>
-                                        {{ $solicitacao->created_at->diffForHumans() }}
+                                        {{ $solicitacao->created_at ? $solicitacao->created_at->diffForHumans() : 'Data não disponível' }}
                                     </small>
                                 </div>
                                 <span class="badge bg-{{ $solicitacao->status === 'ativo' ? 'danger' : ($solicitacao->status === 'em_atendimento' ? 'warning' : 'success') }}">

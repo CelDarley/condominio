@@ -17,7 +17,7 @@ onMounted(() => {
 <template>
   <div id="app">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
       <div class="container">
         <router-link class="navbar-brand" to="/">
           <i class="bi bi-camera-video-fill me-2"></i>
@@ -91,5 +91,9 @@ main {
 
 .nav-link.router-link-active {
   font-weight: 600;
+}
+
+.custom-navbar {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-medium) 100%) !important;
 }
 </style>

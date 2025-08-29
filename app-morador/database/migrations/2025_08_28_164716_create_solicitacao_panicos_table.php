@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('localizacao')->nullable();
             $table->json('coordenadas')->nullable();
             $table->timestamp('atendido_em')->nullable();
-            $table->unsignedBigInteger('atendido_por')->nullable(); // ID do vigilante
+            $table->unsignedInteger('atendido_por')->nullable(); // ID do vigilante
             $table->text('observacoes_atendimento')->nullable();
             $table->timestamps();
             

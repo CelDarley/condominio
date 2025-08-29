@@ -56,7 +56,7 @@
                                         </span>
                                         <small class="text-muted">
                                             <i class="fas fa-clock me-1"></i>
-                                            {{ $alerta->created_at->diffForHumans() }}
+                                            {{ $alerta->created_at ? $alerta->created_at->diffForHumans() : 'Data não disponível' }}
                                         </small>
                                     </div>
                                 </div>
