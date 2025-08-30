@@ -59,7 +59,7 @@ class Usuario extends Authenticatable
         return $this->tipo === 'morador';
     }
 
-    // Relacionamentos (se necessário)
+    // Relacionamentos
     public function escalas()
     {
         return $this->hasMany(Escala::class, 'usuario_id');
@@ -67,6 +67,29 @@ class Usuario extends Authenticatable
 
     public function postosTrabalho()
     {
-        return $this->belongsToMany(PostoTrabalho::class, 'escala', 'usuario_id', 'posto_trabalho_id'); // Corrigido
+        return $this->belongsToMany(PostoTrabalho::class, 'escala', 'usuario_id', 'posto_trabalho_id');
+    }
+
+    // Relacionamento com dados específicos de morador
+    public function dadosMorador()
+    {
+        return $this->hasOne(Morador::class, 'usuario_id')->where('ativo', true);
+    }
+
+    // Método helper para acessar veículos (apenas para moradores)
+    public function veiculos()
+    {
+        return $this->dadosMorador() ? $this->dadosMorador->veiculos() : collect();
+    }
+
+    // Método helper para obter endereço completo (apenas para moradores)
+    public function getEnderecoCompletoAttribute()
+    {
+        if ($this->isMorador() && $this->dadosMorador) {
+            $dados = $this->dadosMorador;
+            return "{$dados->endereco}, Apt {$dados->apartamento}" . 
+                   ($dados->bloco ? ", Bloco {$dados->bloco}" : '');
+        }
+        return null;
     }
 }

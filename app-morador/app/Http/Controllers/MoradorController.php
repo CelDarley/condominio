@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Morador;
+use App\Models\Usuario;
 
 class MoradorController extends Controller
 {
@@ -16,22 +17,51 @@ class MoradorController extends Controller
     
     public function login(Request $request)
     {
+        // Log para debug
+        \Log::info('Tentativa de login no app-morador', [
+            'email' => $request->email,
+            'ip' => $request->ip(),
+            'user_agent' => $request->header('User-Agent')
+        ]);
+        
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
         
-        // Tentar autenticar usando a guard padrão com moradores
-        $credentials = $request->only('email', 'password');
-        $credentials['ativo'] = true; // Só permite login de moradores ativos
+        // Buscar usuário do tipo 'morador' na tabela usuario centralizada
+        $usuario = Usuario::where('email', $request->email)
+                         ->where('tipo', 'morador')
+                         ->where('ativo', true)
+                         ->first();
         
-        if (Auth::guard('morador')->attempt($credentials, $request->filled('remember'))) {
+        \Log::info('Resultado da busca de usuário', [
+            'email' => $request->email,
+            'usuario_encontrado' => $usuario ? 'sim' : 'não',
+            'usuario_id' => $usuario ? $usuario->id : null
+        ]);
+        
+        if ($usuario && Hash::check($request->password, $usuario->senha_hash)) {
+            // Login bem-sucedido usando o guard morador
+            Auth::guard('morador')->login($usuario, $request->filled('remember'));
             $request->session()->regenerate();
+            
+            \Log::info('Login bem-sucedido', [
+                'usuario_id' => $usuario->id,
+                'email' => $usuario->email
+            ]);
+            
             return redirect()->intended(route('dashboard'));
         }
         
+        \Log::warning('Falha no login', [
+            'email' => $request->email,
+            'usuario_existe' => $usuario ? 'sim' : 'não',
+            'senha_confere' => $usuario ? (Hash::check($request->password, $usuario->senha_hash) ? 'sim' : 'não') : 'n/a'
+        ]);
+        
         return back()->withErrors([
-            'email' => 'As credenciais fornecidas não correspondem aos nossos registros.',
+            'email' => 'As credenciais fornecidas não correspondem aos nossos registros ou sua conta não está ativa.',
         ])->onlyInput('email');
     }
     
