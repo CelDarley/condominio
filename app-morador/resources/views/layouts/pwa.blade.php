@@ -258,8 +258,14 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('feed.*') ? 'active' : '' }}" href="{{ route('feed.index') }}">
+                        <i class="fas fa-comments"></i>
+                        <span>Feed</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a class="nav-link {{ request()->routeIs('alertas.*') ? 'active' : '' }}" href="{{ route('alertas.index') }}">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fas fa-bell"></i>
                         <span>Alertas</span>
                     </a>
                 </div>

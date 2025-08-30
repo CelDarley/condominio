@@ -255,6 +255,32 @@
             </div>
         </div>
 
+        <!-- Feed da Comunidade -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>
+                    Feed da Comunidade
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-success mb-3"></i>
+                <p class="text-muted mb-3">
+                    Conecte-se com outros moradores! Compartilhe fotos, vídeos, áudios e participe das conversas da comunidade.
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="{{ route('feed.index') }}" class="btn btn-success">
+                        <i class="fas fa-comments me-2"></i>
+                        Acessar Feed
+                    </a>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Compartilhe momentos e se conecte com vizinhos
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <!-- Comentários Gerais -->
         <div class="card">
             <div class="card-header bg-primary text-white">

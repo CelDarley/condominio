@@ -6,6 +6,7 @@ use App\Http\Controllers\MoradorController;
 use App\Http\Controllers\AlertaController;
 use App\Http\Controllers\ComentarioController;
 use App\Http\Controllers\PanicoController;
+use App\Http\Controllers\FeedController;
 
 // Rotas públicas
 Route::get('/', [DashboardController::class, 'index'])->name('home');
@@ -19,6 +20,14 @@ Route::middleware(['auth.morador'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/alertas', [AlertaController::class, 'index'])->name('alertas.index');
     Route::get('/alertas/{alerta}', [AlertaController::class, 'show'])->name('alertas.show');
+    
+    // Feed da comunidade
+    Route::get('/feed', [FeedController::class, 'index'])->name('feed.index');
+    Route::post('/feed', [FeedController::class, 'store'])->name('feed.store');
+    Route::post('/feed/{post}/like', [FeedController::class, 'like'])->name('feed.like');
+    Route::post('/feed/{post}/comment', [FeedController::class, 'comment'])->name('feed.comment');
+    Route::delete('/feed/{post}', [FeedController::class, 'destroy'])->name('feed.destroy');
+    Route::delete('/feed/comment/{comment}', [FeedController::class, 'destroyComment'])->name('feed.comment.destroy');
     
     // Comentários
     Route::post('/comentarios', [ComentarioController::class, 'store'])->name('comentarios.store');
