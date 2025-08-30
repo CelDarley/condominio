@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('cartao_programa_pontos', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('cartao_programa_id');
-            $table->integer('ponto_base_id');
+            $table->unsignedInteger('ponto_base_id');
             $table->foreign('cartao_programa_id')->references('id')->on('cartao_programas')->onDelete('cascade');
             $table->foreign('ponto_base_id')->references('id')->on('ponto_base')->onDelete('cascade');
             $table->integer('ordem'); // Ordem do ponto na sequência do cartão

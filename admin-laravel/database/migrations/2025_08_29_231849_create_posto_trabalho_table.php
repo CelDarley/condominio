@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('posto_trabalho', function (Blueprint $table) {
             $table->id();
+            $table->string('nome', 100);
+            $table->text('descricao')->nullable();
+            $table->boolean('ativo')->default(true);
+            $table->json('configuracoes')->nullable();
             $table->timestamps();
         });
     }

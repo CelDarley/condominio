@@ -11,16 +11,26 @@ class Escala extends Model
     public $timestamps = true; // Alterado para true já que agora temos timestamps
 
     protected $fillable = [
+        'nome',
+        'descricao',
+        'posto_trabalho_id',
         'usuario_id',
-        'posto_trabalho_id', // Corrigido de 'posto_id' para 'posto_trabalho_id'
-        'cartao_programa_id', // Novo campo
-        'dia_semana',
-        'ativo'
+        'data_inicio',
+        'data_fim',
+        'horario_inicio',
+        'horario_fim',
+        'dias_semana',
+        'ativo',
+        'observacoes'
     ];
 
     protected $casts = [
         'ativo' => 'boolean',
-        'dia_semana' => 'integer'
+        'data_inicio' => 'date',
+        'data_fim' => 'date',
+        'horario_inicio' => 'datetime:H:i',
+        'horario_fim' => 'datetime:H:i',
+        'dias_semana' => 'array'
     ];
 
     // Relacionamentos

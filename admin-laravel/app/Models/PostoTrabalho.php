@@ -8,7 +8,7 @@ class PostoTrabalho extends Model
 {
     protected $table = 'posto_trabalho';
     protected $primaryKey = 'id';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'nome',
@@ -28,7 +28,7 @@ class PostoTrabalho extends Model
 
     public function pontosBase()
     {
-        return $this->hasMany(PontoBase::class, 'posto_id');
+        return $this->hasMany(PontoBase::class, 'posto_trabalho_id');
     }
 
     public function cartoesPrograma()

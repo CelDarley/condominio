@@ -70,6 +70,11 @@ class Usuario extends Authenticatable
     }
 
     // Relacionamentos
+    public function morador()
+    {
+        return $this->hasOne(Morador::class, 'email', 'email');
+    }
+
     public function alertas()
     {
         return $this->hasMany(Alerta::class, 'usuario_id');

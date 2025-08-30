@@ -17,7 +17,7 @@ class PontoBase extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'posto_id',
+        'posto_trabalho_id',
         'nome',
         'endereco',
         'descricao',
@@ -36,7 +36,7 @@ class PontoBase extends Model
     // Relacionamentos
     public function posto(): BelongsTo
     {
-        return $this->belongsTo(PostoTrabalho::class, 'posto_id');
+        return $this->belongsTo(PostoTrabalho::class, 'posto_trabalho_id');
     }
 
     public function cartaoProgramas(): BelongsToMany
@@ -58,7 +58,7 @@ class PontoBase extends Model
 
     public function scopePorPosto($query, $postoId)
     {
-        return $query->where('posto_id', $postoId);
+        return $query->where('posto_trabalho_id', $postoId);
     }
 
     // Métodos auxiliares

@@ -82,12 +82,8 @@ class AdminController extends Controller
                 'morador' => Usuario::where('tipo', 'morador')->count(),
             ],
             
-            // Escalas por dia da semana
-            'escalasPorDia' => Escala::selectRaw('dia_semana, COUNT(*) as total')
-                ->where('ativo', true)
-                ->groupBy('dia_semana')
-                ->pluck('total', 'dia_semana')
-                ->toArray(),
+            // Escalas por dia da semana - ajustado para nova estrutura
+            'escalasPorDia' => $this->getEscalasPorDia(),
                 
             // Postos com mais pontos base
             'postosComPontos' => PostoTrabalho::withCount(['pontosBase' => function($query) {
@@ -100,6 +96,25 @@ class AdminController extends Controller
         ];
 
         return view('admin.dashboard', $data);
+    }
+
+    /**
+     * Método auxiliar para calcular escalas por dia da semana
+     */
+    private function getEscalasPorDia()
+    {
+        $escalas = Escala::where('ativo', true)->get();
+        $escalasPorDia = [];
+        
+        foreach ($escalas as $escala) {
+            if ($escala->dias_semana && is_array($escala->dias_semana)) {
+                foreach ($escala->dias_semana as $dia) {
+                    $escalasPorDia[$dia] = ($escalasPorDia[$dia] ?? 0) + 1;
+                }
+            }
+        }
+        
+        return $escalasPorDia;
     }
 
     public function logout(Request $request)

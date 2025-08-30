@@ -23,13 +23,16 @@ class DashboardController extends Controller
     
     public function dashboard()
     {
-        // Pegar o morador autenticado através do guard 'morador'
-        $morador = auth('morador')->user();
+        // Pegar o usuário autenticado através do guard 'morador'
+        $usuario = auth('morador')->user();
         
-        // Se não houver morador autenticado, redirecionar para login
-        if (!$morador) {
+        // Se não houver usuário autenticado, redirecionar para login
+        if (!$usuario) {
             return redirect()->route('login')->with('error', 'Você precisa estar logado para acessar esta página.');
         }
+        
+        // Carregar dados do morador via relacionamento
+        $morador = $usuario->morador ?? $usuario; // Fallback para o próprio usuário se não houver morador
         
         $alertasAtivos = \App\Models\Alerta::where('status', 'ativo')
             ->orderBy('prioridade', 'desc')
@@ -39,9 +42,15 @@ class DashboardController extends Controller
         // Para o app-morador, não precisamos mostrar vigilantes online
         $vigilantesOnline = collect(); // Array vazio para compatibilidade
             
-        $minhasSolicitacoes = \App\Models\SolicitacaoPanico::where('morador_id', $morador->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Tentar buscar solicitações de pânico, mas não quebrar se a tabela não existir
+        try {
+            $minhasSolicitacoes = \App\Models\SolicitacaoPanico::where('morador_id', $usuario->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Exception $e) {
+            // Se a tabela não existir, usar array vazio
+            $minhasSolicitacoes = collect();
+        }
             
         return view('dashboard', compact('morador', 'alertasAtivos', 'vigilantesOnline', 'minhasSolicitacoes'));
     }

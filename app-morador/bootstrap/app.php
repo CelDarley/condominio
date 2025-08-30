@@ -14,6 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.morador' => \App\Http\Middleware\AuthMorador::class,
         ]);
+        
+        // Configurar exceções CSRF temporariamente
+        $middleware->validateCsrfTokens(except: [
+            'login',
+            'register',
+            'logout',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

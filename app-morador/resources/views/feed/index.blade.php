@@ -273,10 +273,10 @@
             @csrf
             <div class="user-info mb-3">
                 <div class="user-avatar">
-                    {{ substr(Auth::user()->nome, 0, 1) }}
+                    {{ substr(Auth::guard('morador')->user()->nome, 0, 1) }}
                 </div>
                 <div>
-                    <div class="user-name">{{ Auth::user()->nome }}</div>
+                    <div class="user-name">{{ Auth::guard('morador')->user()->nome }}</div>
                     <small class="text-muted">Compartilhe algo com a comunidade...</small>
                 </div>
             </div>
@@ -338,7 +338,7 @@
                         <div class="post-time">{{ $post->tempo_decorrido }}</div>
                     </div>
                     
-                    @if($post->usuario_id === Auth::id())
+                    @if($post->usuario_id === Auth::guard('morador')->id())
                         <div class="ms-auto">
                             <button class="btn btn-sm btn-outline-danger delete-post-btn" data-post-id="{{ $post->id }}">
                                 <i class="fas fa-trash"></i>
@@ -406,7 +406,7 @@
                                 <div class="comment-time">{{ $comentario->tempo_decorrido }}</div>
                             </div>
                             
-                            @if($comentario->usuario_id === Auth::id())
+                            @if($comentario->usuario_id === Auth::guard('morador')->id())
                                 <button class="btn btn-sm btn-outline-danger delete-comment-btn" data-comment-id="{{ $comentario->id }}">
                                     <i class="fas fa-times"></i>
                                 </button>
