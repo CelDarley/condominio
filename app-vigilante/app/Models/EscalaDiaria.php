@@ -107,8 +107,8 @@ class EscalaDiaria extends Model
         $diaSemanaDb = ($diaSemana == 0) ? 6 : $diaSemana - 1;
 
         // Buscar escalas semanais para este dia
-        $query = Escala::with(['usuario', 'postoTrabalho', 'cartaoPrograma'])
-            ->where('dia_semana', $diaSemanaDb)
+        $query = Escala::with(['usuario', 'postoTrabalho'])
+            ->whereJsonContains('dias_semana', $diaSemanaDb)
             ->where('ativo', true);
             
         if ($usuarioId) {
@@ -122,7 +122,7 @@ class EscalaDiaria extends Model
         $escalasSemanais = $query->get();
 
         // Buscar ajustes diários para esta data
-        $ajustesQuery = self::with(['usuarioSubstituto', 'postoTrabalho', 'cartaoPrograma', 'escalaOriginal'])
+        $ajustesQuery = self::with(['usuarioSubstituto', 'postoTrabalho', 'escalaOriginal'])
             ->where('data', $data)
             ->where('status', 'ativo');
             
@@ -144,11 +144,8 @@ class EscalaDiaria extends Model
                     $escalaAjustada->usuario_id = $ajuste->usuario_substituto_id;
                     $escalaAjustada->usuario = $ajuste->usuarioSubstituto;
                     
-                    // Se tem cartão programa específico, usar ele, senão manter original
-                    if ($ajuste->cartao_programa_id) {
-                        $escalaAjustada->cartao_programa_id = $ajuste->cartao_programa_id;
-                        $escalaAjustada->cartaoPrograma = $ajuste->cartaoPrograma;
-                    }
+                    // Cartão programa não está mais disponível na nova estrutura
+                    // Remover referências temporariamente
                     
                     $escalaAjustada->ajuste_diario = $ajuste;
                     $escalaAjustada->tem_ajuste = true;

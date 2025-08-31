@@ -12,6 +12,11 @@ Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 })->name('home');
 
+// Rota de teste para debug
+Route::get('/test', function () {
+    return '<h1>Teste Simples</h1><p>Se você vê isso, o Laravel está funcionando!</p>';
+})->name('test');
+
 // Rotas de autenticação
 Route::group(['prefix' => 'auth'], function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -54,4 +59,9 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         Route::post('/panico', [AvisoController::class, 'panico'])->name('avisos.panico');
     });
     
+});
+
+// Rota de teste
+Route::get('/teste', function () {
+    return view('test');
 });

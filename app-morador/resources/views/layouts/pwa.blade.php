@@ -124,7 +124,7 @@
             text-align: center;
         }
         
-        /* Navegação inferior para PWA */
+        /* Navegação inferior OTIMIZADA */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -133,9 +133,96 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-top: 1px solid rgba(54, 70, 89, 0.1);
-            padding: 10px 0;
-            padding-bottom: calc(10px + var(--bottom-bar-height));
+            padding: 8px 0; /* Reduzido de 10px para 8px */
+            padding-bottom: calc(8px + var(--bottom-bar-height));
             z-index: 1000;
+            height: 65px; /* Altura fixa menor */
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        /* Área de digitação flutuante - POSIÇÃO CENTRAL */
+        .floating-input-area {
+            position: fixed;
+            top: 50%; /* Posição central da tela */
+            left: 10px;
+            right: 10px;
+            transform: translateY(-50%) translateY(200px); /* Centraliza verticalmente + animação */
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: 25px;
+            padding: 12px 16px;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+            border: 3px solid #00ff00; /* Verde para debug - bem visível */
+            z-index: 1100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            max-height: 60px;
+        }
+        
+        /* Posição centralizada funciona em todas as páginas */
+        /* Removido ajuste específico - área agora é sempre centralizada */
+        
+        /* Estilos específicos para página do feed */
+        .feed-page {
+            padding-bottom: 20px; /* Sem necessidade de espaço extra para barra */
+        }
+        
+        .floating-input-area.active {
+            transform: translateY(-50%); /* Mantém centralizada quando ativa */
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .floating-input-area .form-control {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 8px 16px; /* Padding reduzido */
+            font-size: 16px;
+            height: 40px; /* Altura fixa */
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-color);
+        }
+        
+        .floating-input-area .form-control::placeholder {
+            color: rgba(54, 70, 89, 0.7);
+        }
+        
+        .floating-input-area .form-control:focus {
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+            background: white;
+        }
+        
+        .floating-input-area .btn {
+            border-radius: 20px;
+            padding: 8px 16px; /* Padding reduzido */
+            height: 40px; /* Mesma altura do input */
+            min-width: 40px; /* Largura mínima */
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .floating-input-area .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .floating-input-area .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        .floating-input-area .btn-outline-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .floating-input-area .btn-outline-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
         }
         
         .bottom-nav .nav-item {
@@ -145,8 +232,8 @@
         
         .bottom-nav .nav-link {
             color: var(--secondary-color);
-            font-size: 12px;
-            padding: 5px;
+            font-size: 11px; /* Menor para economizar espaço */
+            padding: 3px; /* Reduzido */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -157,13 +244,19 @@
         }
         
         .bottom-nav .nav-link i {
-            font-size: 20px;
-            margin-bottom: 3px;
+            font-size: 18px; /* Reduzido de 20px para 18px */
+            margin-bottom: 2px; /* Reduzido */
         }
         
-        /* Ajustes para conteúdo quando há navegação inferior */
+        /* Ajustes para área flutuante + barra otimizada */
         .with-bottom-nav {
-            padding-bottom: 80px;
+            padding-bottom: 80px; /* Espaço para barra + área flutuante */
+        }
+        
+        @media (max-width: 768px) {
+            .with-bottom-nav {
+                padding-bottom: 100px !important;
+            }
         }
         
         /* Estilos específicos para PWA */
@@ -247,8 +340,8 @@
         @yield('content')
     </div>
 
-    <!-- Bottom Navigation (só aparecer se logado) -->
-    @if(Auth::guard('morador')->check())
+    <!-- Bottom Navigation - OCULTA NO FEED DA COMUNIDADE -->
+    @if(Auth::guard('morador')->check() && !request()->routeIs('feed.*'))
         <nav class="bottom-nav">
             <div class="d-flex">
                 <div class="nav-item">
@@ -388,6 +481,104 @@
                 bsAlert.close();
             });
         }, 5000);
+
+        // Controle da área de digitação flutuante
+        function setupFloatingInputControl() {
+            console.log('🔍 Configurando controle da área de digitação flutuante...');
+            
+            // Criar área flutuante se não existir
+            let floatingArea = document.querySelector('.floating-input-area');
+            if (!floatingArea) {
+                floatingArea = document.createElement('div');
+                floatingArea.className = 'floating-input-area';
+                floatingArea.innerHTML = `
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text" class="form-control flex-grow-1" placeholder="Digite seu comentário..." id="floatingInput">
+                        <button class="btn btn-primary" id="floatingSubmit">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" id="floatingClose">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(floatingArea);
+            }
+
+            let currentOriginalField = null;
+            
+            // Mostrar área flutuante quando input/textarea recebe foco
+            document.addEventListener('focusin', function(e) {
+                console.log('🔍 Elemento focado:', e.target.tagName, e.target.type, e.target);
+                if (e.target.matches('input[type="text"], textarea') && !e.target.id.includes('floating')) {
+                    console.log('🎯 Campo de input focado, mostrando área flutuante!');
+                    currentOriginalField = e.target;
+                    
+                    // Copiar valor atual para área flutuante
+                    const floatingInput = document.getElementById('floatingInput');
+                    if (floatingInput) {
+                        floatingInput.value = e.target.value;
+                        floatingInput.placeholder = e.target.placeholder || 'Digite aqui...';
+                    }
+                    
+                    // Mostrar área flutuante
+                    floatingArea.classList.add('active');
+                    
+                    // Focar na área flutuante
+                    setTimeout(() => {
+                        floatingInput.focus();
+                    }, 300);
+                    
+                    // Desfocar campo original
+                    e.target.blur();
+                }
+            });
+
+            // Controles da área flutuante
+            document.addEventListener('click', function(e) {
+                if (e.target.id === 'floatingClose' || e.target.closest('#floatingClose')) {
+                    console.log('❌ Fechando área flutuante');
+                    floatingArea.classList.remove('active');
+                    currentOriginalField = null;
+                }
+                
+                if (e.target.id === 'floatingSubmit' || e.target.closest('#floatingSubmit')) {
+                    console.log('📤 Enviando da área flutuante');
+                    const floatingInput = document.getElementById('floatingInput');
+                    if (currentOriginalField && floatingInput) {
+                        // Copiar valor de volta para campo original
+                        currentOriginalField.value = floatingInput.value;
+                        
+                        // Simular envio no campo original
+                        const form = currentOriginalField.closest('form');
+                        if (form) {
+                            form.dispatchEvent(new Event('submit'));
+                        }
+                        
+                        // Fechar área flutuante
+                        floatingArea.classList.remove('active');
+                        floatingInput.value = '';
+                        currentOriginalField = null;
+                    }
+                }
+            });
+
+            // Suporte para Enter na área flutuante
+            document.addEventListener('keydown', function(e) {
+                if (e.target.id === 'floatingInput' && e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('floatingSubmit').click();
+                }
+                
+                // ESC para fechar
+                if (e.key === 'Escape' && floatingArea.classList.contains('active')) {
+                    document.getElementById('floatingClose').click();
+                }
+            });
+        }
+
+        // Inicializar controle da área flutuante
+        setupFloatingInputControl();
     </script>
     
     @yield('scripts')

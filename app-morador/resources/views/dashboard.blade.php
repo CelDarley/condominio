@@ -5,33 +5,28 @@
 @section('content')
 <div class="row">
     <div class="col-lg-8">
-        <!-- Boas-vindas -->
+        <!-- Feed da Comunidade -->
         <div class="card mb-4">
-            <div class="card-body">
-                <h4 class="card-title text-primary">
-                    <i class="fas fa-user me-2"></i>
-                    Olá, {{ $morador->nome }}!
-                </h4>
-                <p class="card-text text-muted">
-                    Bem-vindo ao seu painel de controle. Aqui você pode acompanhar os alertas, 
-                    ver a posição dos vigilantes e gerenciar suas solicitações.
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>
+                    Feed da Comunidade
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-success mb-3"></i>
+                <p class="text-muted mb-3">
+                    Conecte-se com outros moradores! Compartilhe fotos, vídeos, áudios e participe das conversas da comunidade.
                 </p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <small class="text-muted">
-                            <i class="fas fa-home me-1"></i>
-                            <strong>Apartamento:</strong> {{ $morador->apartamento }}
-                            @if($morador->bloco)
-                                - Bloco {{ $morador->bloco }}
-                            @endif
-                        </small>
-                    </div>
-                    <div class="col-md-6">
-                        <small class="text-muted">
-                            <i class="fas fa-envelope me-1"></i>
-                            <strong>E-mail:</strong> {{ $morador->email }}
-                        </small>
-                    </div>
+                <div class="d-grid gap-2">
+                    <a href="{{ route('feed.index') }}" class="btn btn-success">
+                        <i class="fas fa-comments me-2"></i>
+                        Acessar Feed
+                    </a>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Compartilhe momentos e se conecte com vizinhos
+                    </small>
                 </div>
             </div>
         </div>
@@ -207,112 +202,7 @@
             </div>
         </div>
 
-        <!-- Minhas Solicitações de Pânico -->
-        <div class="card mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    Minhas Solicitações
-                </h5>
-            </div>
-            <div class="card-body">
-                @if($minhasSolicitacoes->count() > 0)
-                    @foreach($minhasSolicitacoes->take(5) as $solicitacao)
-                        <div class="border-start border-3 ps-3 mb-3 
-                                    {{ $solicitacao->status === 'ativo' ? 'border-danger' : ($solicitacao->status === 'em_atendimento' ? 'border-warning' : 'border-success') }}">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">{{ ucfirst($solicitacao->tipo) }}</h6>
-                                    @if($solicitacao->descricao)
-                                        <p class="small mb-1">{{ $solicitacao->descricao }}</p>
-                                    @endif
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>
-                                        {{ $solicitacao->created_at ? $solicitacao->created_at->diffForHumans() : 'Data não disponível' }}
-                                    </small>
-                                </div>
-                                <span class="badge bg-{{ $solicitacao->status === 'ativo' ? 'danger' : ($solicitacao->status === 'em_atendimento' ? 'warning' : 'success') }}">
-                                    {{ ucfirst($solicitacao->status) }}
-                                </span>
-                            </div>
-                        </div>
-                    @endforeach
-                    
-                    @if($minhasSolicitacoes->count() > 5)
-                        <div class="text-center">
-                            <small class="text-muted">
-                                <i class="fas fa-ellipsis-h me-1"></i>
-                                E mais {{ $minhasSolicitacoes->count() - 5 }} solicitações...
-                            </small>
-                        </div>
-                    @endif
-                @else
-                    <div class="text-center py-3">
-                        <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
-                        <p class="mt-2 text-muted">Nenhuma solicitação encontrada</p>
-                    </div>
-                @endif
-            </div>
-        </div>
 
-        <!-- Feed da Comunidade -->
-        <div class="card mb-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-comments me-2"></i>
-                    Feed da Comunidade
-                </h5>
-            </div>
-            <div class="card-body text-center">
-                <i class="fas fa-users fa-3x text-success mb-3"></i>
-                <p class="text-muted mb-3">
-                    Conecte-se com outros moradores! Compartilhe fotos, vídeos, áudios e participe das conversas da comunidade.
-                </p>
-                <div class="d-grid gap-2">
-                    <a href="{{ route('feed.index') }}" class="btn btn-success">
-                        <i class="fas fa-comments me-2"></i>
-                        Acessar Feed
-                    </a>
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Compartilhe momentos e se conecte com vizinhos
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Comentários Gerais -->
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-comments me-2"></i>
-                    Comentários Gerais
-                </h5>
-            </div>
-            <div class="card-body">
-                <form class="comentario-geral-form">
-                    <div class="mb-3">
-                        <textarea class="form-control" rows="3" 
-                                  placeholder="Compartilhe uma sugestão, reclamação ou comentário geral..." 
-                                  name="conteudo" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <select class="form-select" name="tipo" required>
-                            <option value="">Selecione o tipo...</option>
-                            <option value="sugestao">Sugestão</option>
-                            <option value="reclamacao">Reclamação</option>
-                            <option value="geral">Comentário Geral</option>
-                        </select>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-paper-plane me-2"></i>
-                            Enviar Comentário
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 </div>
 

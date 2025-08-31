@@ -418,10 +418,11 @@
     <!-- Custom JS -->
     <script>
         // CSRF Token para AJAX
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
         window.axios = {
             defaults: {
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': csrfToken ? csrfToken.content : ''
                 }
             }
         };
@@ -466,6 +467,31 @@
         function showQuickActions() {
             const modal = new bootstrap.Modal(document.getElementById('quickActionsModal'));
             modal.show();
+        }
+
+        // Funções específicas do dashboard
+        function refreshDashboard() {
+            window.location.reload();
+        }
+        
+        function showAvisoModal() {
+            const modal = new bootstrap.Modal(document.getElementById('avisoModal'));
+            modal.show();
+        }
+        
+        function confirmarPanico() {
+            const modal = new bootstrap.Modal(document.getElementById('panicoModal'));
+            modal.show();
+        }
+        
+        function enviarAviso() {
+            // Implementar funcionalidade de envio de aviso
+            alert('Funcionalidade de aviso será implementada');
+        }
+        
+        function enviarPanico() {
+            // Implementar funcionalidade de pânico
+            alert('Funcionalidade de pânico será implementada');
         }
 
         // Auto-hide alerts after 5 seconds

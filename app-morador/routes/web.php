@@ -22,7 +22,7 @@ Route::middleware(['auth.morador'])->group(function () {
     Route::get('/alertas/{alerta}', [AlertaController::class, 'show'])->name('alertas.show');
     
     // Feed da comunidade
-    Route::get('/feed', [FeedController::class, 'index'])->name('feed.index');
+            Route::get('/feed', [FeedController::class, 'chat'])->name('feed.index');
     Route::post('/feed', [FeedController::class, 'store'])->name('feed.store');
     Route::post('/feed/{post}/like', [FeedController::class, 'like'])->name('feed.like');
     Route::post('/feed/{post}/comment', [FeedController::class, 'comment'])->name('feed.comment');

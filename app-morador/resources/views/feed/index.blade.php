@@ -2,6 +2,8 @@
 
 @section('title', 'Feed da Comunidade')
 
+@section('container-class', 'feed-page')
+
 @section('styles')
 <style>
     .feed-container {
@@ -10,12 +12,20 @@
         padding: 20px;
     }
     
+    .chat-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px 15px 150px 15px; /* Padding inferior aumentado para evitar sobreposição com barra de navegação */
+        min-height: calc(100vh - 150px);
+    }
+    
     .post-card {
         background: white;
         border-radius: 15px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         margin-bottom: 20px;
         overflow: hidden;
+        border: 2px solid var(--primary-color); /* Borda azul suave */
     }
     
     .post-header {
@@ -43,17 +53,18 @@
     
     .user-name {
         font-weight: 600;
-        color: #333;
+        color: #333; /* Texto escuro no fundo branco */
     }
     
     .post-time {
-        color: #666;
+        color: #666; /* Cinza para o tempo */
         font-size: 0.9em;
     }
     
     .post-content {
         padding: 20px;
         line-height: 1.6;
+        color: #333; /* Texto escuro para as postagens */
     }
     
     .post-media {
@@ -85,13 +96,13 @@
         gap: 5px;
         background: none;
         border: none;
-        color: #666;
+        color: #666; /* Botões em cinza */
         cursor: pointer;
         transition: color 0.3s;
     }
     
     .action-btn:hover {
-        color: #364659;
+        color: var(--primary-color); /* Hover em azul */
     }
     
     .action-btn.liked {
@@ -123,26 +134,29 @@
     }
     
     .comment-content {
-        background: #f8f9fa;
+        background: #f8f9fa; /* Fundo cinza claro */
         padding: 10px 15px;
         border-radius: 20px;
         flex: 1;
+        border: 1px solid #e9ecef;
     }
     
     .comment-author {
         font-weight: 600;
         font-size: 0.9em;
         margin-bottom: 2px;
+        color: #333; /* Nome do autor em escuro */
     }
     
     .comment-text {
         font-size: 0.9em;
         line-height: 1.4;
+        color: #555; /* Texto do comentário em cinza escuro */
     }
     
     .comment-time {
         font-size: 0.8em;
-        color: #666;
+        color: #666; /* Tempo do comentário em cinza */
         margin-top: 5px;
     }
     
@@ -183,16 +197,24 @@
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         padding: 20px;
         margin-bottom: 20px;
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+        border: 2px solid var(--primary-color); /* Borda azul suave igual aos posts */
     }
     
     .post-textarea {
         width: 100%;
-        border: none;
+        border: 1px solid #ddd;
         resize: none;
         outline: none;
         font-size: 16px;
         line-height: 1.5;
         min-height: 80px;
+        background: white;
+        color: #333;
+        border-radius: 10px;
+        padding: 10px;
     }
     
     .post-form-actions {
@@ -262,11 +284,131 @@
         cursor: pointer;
         font-size: 12px;
     }
+    
+    /* Garantir que os inputs não sejam cobertos pela barra de navegação */
+    .comment-form {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+    }
+    
+    /* Espaçamento extra para o último elemento */
+    .post-card:last-child {
+        margin-bottom: 50px;
+    }
+    
+    /* Ajuste para dispositivos móveis */
+    @media (max-width: 768px) {
+        .chat-container {
+            padding-bottom: 180px !important; /* Muito mais espaço em dispositivos móveis */
+        }
+        
+        .new-post-form {
+            position: relative; /* Remover sticky em mobile para melhor UX */
+            top: auto;
+            margin-bottom: 30px;
+        }
+        
+        .comment-form {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+        
+        .post-card:last-child {
+            margin-bottom: 80px;
+        }
+    }
+    
+    /* Espaçamento otimizado sem barra de navegação */
+    .chat-container {
+        padding-bottom: 80px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Botão de navegação flutuante */
+    .feed-nav-button {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+    
+    .feed-nav-button .btn {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .comment-form {
+        margin-bottom: 20px !important;
+        padding-bottom: 10px !important;
+    }
+    
+    /* Garantir que o último elemento tenha espaço extra */
+    .post-card:last-child .comment-form {
+        margin-bottom: 40px !important;
+        padding-bottom: 20px !important;
+    }
+    
+    /* Espaçamento específico para mobile */
+    @media screen and (max-width: 768px) {
+        .chat-container {
+            padding-bottom: 120px !important;
+            margin-bottom: 30px !important;
+        }
+        
+        .comment-form {
+            margin-bottom: 30px !important;
+            padding-bottom: 15px !important;
+        }
+        
+        .post-card:last-child .comment-form {
+            margin-bottom: 60px !important;
+            padding-bottom: 30px !important;
+        }
+    }
 </style>
 @endsection
 
 @section('content')
-<div class="feed-container">
+<!-- Botão de navegação flutuante para o feed -->
+<div class="feed-nav-button">
+    <button class="btn btn-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#feedNavModal">
+        <i class="fas fa-bars"></i>
+    </button>
+</div>
+
+<!-- Modal de navegação -->
+<div class="modal fade" id="feedNavModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Navegação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ route('dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-home me-2"></i>Início
+                    </a>
+                    <a href="{{ route('alertas.index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-bell me-2"></i>Alertas
+                    </a>
+                    <button class="btn btn-outline-danger" onclick="ativarPanico()">
+                        <i class="fas fa-shield-alt me-2"></i>Pânico
+                    </button>
+                    <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#profileModal" data-bs-dismiss="modal">
+                        <i class="fas fa-user me-2"></i>Perfil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="chat-container">
     <!-- Formulário para criar novo post -->
     <div class="new-post-form">
         <form action="{{ route('feed.store') }}" method="POST" enctype="multipart/form-data" id="postForm">
@@ -469,6 +611,59 @@ document.addEventListener('DOMContentLoaded', function() {
         validateForm();
     });
     
+    // Interceptar envio do formulário para fazer via AJAX
+    document.getElementById('postForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const originalText = submitBtn.textContent;
+        
+        // Desabilitar botão e mostrar loading
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publicando...';
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Limpar formulário
+                this.reset();
+                mediaPreview.innerHTML = '';
+                validateForm();
+                
+                // Adicionar post na tela imediatamente
+                if (data.post) {
+                    addNewPostToFeed(data.post);
+                }
+                
+                showNotification('📝 Post publicado com sucesso!', 'success');
+            } else {
+                showNotification('❌ Erro ao publicar: ' + (data.error || 'Erro desconhecido'), 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erro ao publicar:', error);
+            showNotification('❌ Erro ao publicar: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            // Reabilitar botão
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            validateForm();
+        });
+    });
+    
     // Preview de mídias selecionadas
     function previewMedia() {
         mediaPreview.innerHTML = '';
@@ -588,27 +783,243 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Deletar post
+    // Função para deletar post
+    function handleDeletePost() {
+        if (confirm('Tem certeza que deseja deletar este post?')) {
+            const postId = this.dataset.postId;
+            console.log('🗑️ Tentando deletar post ID:', postId);
+            
+            fetch(`/feed/${postId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('📡 Status da resposta:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 Dados recebidos:', data);
+                if (data.success) {
+                    this.closest('.post-card').remove();
+                    showNotification('🗑️ Post excluído com sucesso!', 'success');
+                } else {
+                    showNotification('❌ Erro ao excluir post: ' + (data.error || 'Erro desconhecido'), 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erro ao deletar:', error);
+                showNotification('❌ Erro ao excluir: ' + error.message, 'danger');
+            });
+        }
+    }
+
+    // Função para like em post
+    function handleLikePost() {
+        // Implementar lógica de like aqui se necessário
+        console.log('❤️ Like no post:', this.dataset.postId);
+    }
+
+    // Aplicar event listeners nos posts existentes
     document.querySelectorAll('.delete-post-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm('Tem certeza que deseja deletar este post?')) {
-                const postId = this.dataset.postId;
+        btn.addEventListener('click', handleDeletePost);
+    });
+
+    // Obter ID do usuário atual (escopo global)
+    const currentUserId = {{ Auth::guard('morador')->id() ?? 'null' }};
+    
+    // ===== WEBSOCKET - TEMPO REAL =====
+    if (window.Echo) {
+        console.log('🔌 Conectando ao WebSocket...');
+        
+        window.Echo.channel('feed-updates')
+            .listen('.post.updated', (e) => {
+                console.log('📡 Evento recebido:', e);
                 
-                fetch(`/feed/${postId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
+                if (e.action === 'created') {
+                    // Só adicionar se for de outro usuário (para evitar duplicação)
+                    if (e.post.usuario.id !== currentUserId) {
+                        addNewPostToFeed(e.post);
+                        showNotification(`📝 ${e.post.usuario.nome} fez uma nova publicação!`, 'info');
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        this.closest('.post-card').remove();
-                    }
-                });
+                } else if (e.action === 'deleted') {
+                    // Remover post da lista (qualquer usuário)
+                    removePostFromFeed(e.post.id);
+                }
+            });
+    } else {
+        console.log('❌ Echo não está disponível');
+    }
+
+    // Função para adicionar novo post
+    function addNewPostToFeed(postData) {
+        const feedContainer = document.querySelector('.post-card')?.parentElement;
+        if (!feedContainer) return;
+
+        const postHtml = createPostHTML(postData);
+        feedContainer.insertAdjacentHTML('afterbegin', postHtml);
+        
+        // Adicionar event listeners para o novo post
+        const newPost = feedContainer.querySelector(`[data-post-id="${postData.id}"]`);
+        if (newPost) {
+            // Event listener para botão de deletar
+            const deleteBtn = newPost.querySelector('.delete-post-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', handleDeletePost);
+            }
+            
+            // Event listener para botão de like
+            const likeBtn = newPost.querySelector('.like-btn');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', handleLikePost);
+            }
+        }
+        
+        // Mostrar notificação
+        showNotification('📝 Novo post adicionado!', 'success');
+    }
+
+    // Função para remover post
+    function removePostFromFeed(postId) {
+        const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+        if (postElement) {
+            postElement.style.transition = 'opacity 0.3s ease';
+            postElement.style.opacity = '0';
+            setTimeout(() => {
+                postElement.remove();
+                showNotification('🗑️ Post removido', 'info');
+            }, 300);
+        }
+    }
+
+    // Função para criar HTML do post
+    function createPostHTML(post) {
+        const userInitial = post.usuario.nome.charAt(0).toUpperCase();
+        const mediasHtml = post.medias.map(media => {
+            if (media.tipo === 'imagem') {
+                return `<img src="${media.url}" alt="${media.arquivo_nome}" class="post-image">`;
+            }
+            return '';
+        }).join('');
+
+        // Botão de deletar só aparece se for do usuário atual
+        const deleteButton = post.usuario.id === currentUserId ? 
+            `<div class="ms-auto">
+                <button class="btn btn-sm btn-outline-danger delete-post-btn" data-post-id="${post.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>` : '';
+
+        return `
+            <div class="post-card" data-post-id="${post.id}" style="animation: slideInDown 0.5s ease;">
+                <div class="post-header">
+                    <div class="user-info">
+                        <div class="user-avatar">${userInitial}</div>
+                        <div>
+                            <div class="user-name">${post.usuario.nome}</div>
+                            <div class="post-time">${post.tempo_decorrido}</div>
+                        </div>
+                    </div>
+                    ${deleteButton}
+                </div>
+                
+                ${post.conteudo ? `<div class="post-content">${post.conteudo}</div>` : ''}
+                
+                ${mediasHtml ? `<div class="post-media">${mediasHtml}</div>` : ''}
+                
+                <div class="post-actions">
+                    <button class="action-btn like-btn" data-post-id="${post.id}">
+                        <i class="fas fa-heart"></i>
+                        <span>${post.likes}</span>
+                    </button>
+                    <button class="action-btn comment-toggle-btn">
+                        <i class="fas fa-comment"></i>
+                        <span>${post.comentarios_count}</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Função para mostrar notificações
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; animation: slideInRight 0.3s ease;';
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Ajuste para teclado virtual em dispositivos móveis
+    function handleVirtualKeyboard() {
+        const initialViewportHeight = window.innerHeight;
+        
+        window.addEventListener('resize', function() {
+            const currentViewportHeight = window.innerHeight;
+            const heightDifference = initialViewportHeight - currentViewportHeight;
+            
+            // Se a diferença de altura for significativa, provavelmente o teclado virtual está ativo
+            if (heightDifference > 150) {
+                document.body.style.paddingBottom = '20px';
+                // Scroll para o elemento ativo se necessário
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    setTimeout(() => {
+                        activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                }
+            } else {
+                document.body.style.paddingBottom = '';
             }
         });
+    }
+    
+    // Inicializar ajuste do teclado virtual
+    if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        handleVirtualKeyboard();
+    }
+    
+    // Scroll suave para campos focados (a barra de navegação já se esconde automaticamente)
+    document.addEventListener('focusin', function(e) {
+        if (e.target.matches('input, textarea')) {
+            setTimeout(() => {
+                e.target.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }, 400); // Delay para aguardar a barra se esconder
+        }
     });
 });
 </script>
+
+<style>
+@keyframes slideInDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+</style>
 @endsection 

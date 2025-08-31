@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\PostMedia;
+use App\Events\PostUpdated;
 
 class FeedController extends Controller
 {
@@ -22,6 +23,16 @@ class FeedController extends Controller
                     ->paginate(10);
 
         return view('feed.index', compact('posts'));
+    }
+
+    public function chat()
+    {
+        $posts = Post::with(['usuario', 'medias'])
+                    ->ativos()
+                    ->orderBy('created_at', 'asc') // Ordem cronológica como WhatsApp
+                    ->paginate(50); // Mais mensagens por página
+
+        return view('feed.chat', compact('posts'));
     }
 
     /**
@@ -39,7 +50,7 @@ class FeedController extends Controller
             return back()->withErrors(['conteudo' => 'É necessário adicionar texto ou mídia ao post.']);
         }
 
-        $usuario = Auth::user();
+        $usuario = Auth::guard('morador')->user();
         
         // Criar o post
         $post = Post::create([
@@ -52,6 +63,37 @@ class FeedController extends Controller
         // Processar arquivos de mídia se houver
         if ($request->hasFile('medias')) {
             $this->processarMedias($request->file('medias'), $post);
+        }
+
+        // Disparar evento para atualização em tempo real
+        broadcast(new PostUpdated($post->load(['usuario', 'medias']), 'created'));
+
+        // Se for requisição AJAX, retornar JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Post criado com sucesso!',
+                'post' => [
+                    'id' => $post->id,
+                    'conteudo' => $post->conteudo,
+                    'tipo' => $post->tipo,
+                    'usuario' => [
+                        'id' => $post->usuario->id,
+                        'nome' => $post->usuario->nome,
+                    ],
+                    'likes' => $post->likes,
+                    'comentarios_count' => $post->comentarios_count,
+                    'tempo_decorrido' => $post->tempo_decorrido,
+                    'medias' => $post->medias->map(function ($media) {
+                        return [
+                            'id' => $media->id,
+                            'tipo' => $media->tipo,
+                            'arquivo_nome' => $media->arquivo_nome,
+                            'url' => $media->url,
+                        ];
+                    }),
+                ]
+            ]);
         }
 
         return redirect()->route('feed.index')->with('success', 'Post criado com sucesso!');
@@ -83,7 +125,7 @@ class FeedController extends Controller
 
         $comentario = PostComment::create([
             'post_id' => $post->id,
-            'usuario_id' => Auth::id(),
+            'usuario_id' => Auth::guard('morador')->id(),
             'comentario' => $request->comentario,
             'ativo' => true,
         ]);
@@ -107,14 +149,24 @@ class FeedController extends Controller
      */
     public function destroy(Post $post)
     {
-        $usuario = Auth::user();
+        \Log::info('🗑️ Tentativa de exclusão - Post ID: ' . $post->id);
+        
+        $usuario = Auth::guard('morador')->user();
+        \Log::info('👤 Usuário logado: ' . ($usuario ? $usuario->id . ' - ' . $usuario->nome : 'NENHUM'));
+        \Log::info('📝 Post pertence ao usuário: ' . $post->usuario_id);
         
         // Verificar se o usuário pode deletar o post
         if ($post->usuario_id !== $usuario->id) {
+            \Log::warning('❌ Usuário não autorizado a deletar post');
             return response()->json(['error' => 'Não autorizado'], 403);
         }
 
         $post->update(['ativo' => false]);
+        \Log::info('✅ Post marcado como inativo');
+        
+        // Disparar evento para atualização em tempo real
+        broadcast(new PostUpdated($post, 'deleted'));
+        \Log::info('📡 Evento WebSocket disparado');
         
         return response()->json(['success' => true]);
     }
@@ -124,7 +176,7 @@ class FeedController extends Controller
      */
     public function destroyComment(PostComment $comment)
     {
-        $usuario = Auth::user();
+        $usuario = Auth::guard('morador')->user();
         
         // Verificar se o usuário pode deletar o comentário
         if ($comment->usuario_id !== $usuario->id) {

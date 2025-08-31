@@ -11,19 +11,26 @@ class Escala extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'usuario_id',
+        'nome',
+        'descricao',
         'posto_trabalho_id',
-        'cartao_programa_id',
-        'dia_semana',
+        'usuario_id',
+        'data_inicio',
+        'data_fim',
+        'horario_inicio',
+        'horario_fim',
+        'dias_semana',
         'ativo',
-        'created_at',
-        'updated_at'
+        'observacoes'
     ];
 
     protected $casts = [
+        'data_inicio' => 'date',
+        'data_fim' => 'date', 
+        'horario_inicio' => 'datetime:H:i',
+        'horario_fim' => 'datetime:H:i',
+        'dias_semana' => 'array',
         'ativo' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
     // Relacionamentos
@@ -37,10 +44,7 @@ class Escala extends Model
         return $this->belongsTo(PostoTrabalho::class, 'posto_trabalho_id');
     }
 
-    public function cartaoPrograma()
-    {
-        return $this->belongsTo(CartaoPrograma::class, 'cartao_programa_id');
-    }
+
 
     // Scopes
     public function scopeAtivas($query)
@@ -50,7 +54,7 @@ class Escala extends Model
 
     public function scopePorDia($query, $diaSemana)
     {
-        return $query->where('dia_semana', $diaSemana);
+        return $query->whereJsonContains('dias_semana', $diaSemana);
     }
 
     public function scopePorUsuario($query, $usuarioId)
@@ -59,11 +63,11 @@ class Escala extends Model
     }
 
     // Métodos auxiliares
-    public function getNomeDiaSemana()
+    public function getDiasSemanaTexto()
     {
         $dias = [
             0 => 'Segunda-feira',
-            1 => 'Terça-feira',
+            1 => 'Terça-feira', 
             2 => 'Quarta-feira',
             3 => 'Quinta-feira',
             4 => 'Sexta-feira',
@@ -71,26 +75,36 @@ class Escala extends Model
             6 => 'Domingo'
         ];
 
-        return $dias[$this->dia_semana] ?? 'Indefinido';
+        $nomesDias = [];
+        foreach ($this->dias_semana ?? [] as $dia) {
+            $nomesDias[] = $dias[$dia] ?? 'Indefinido';
+        }
+
+        return implode(', ', $nomesDias);
     }
 
-    public function getNomeDiaSemanaAbrev()
+    public function getDiasSemanaAbrev()
     {
         $dias = [
             0 => 'Seg',
             1 => 'Ter',
-            2 => 'Qua',
+            2 => 'Qua', 
             3 => 'Qui',
             4 => 'Sex',
             5 => 'Sáb',
             6 => 'Dom'
         ];
 
-        return $dias[$this->dia_semana] ?? '?';
+        $nomesDias = [];
+        foreach ($this->dias_semana ?? [] as $dia) {
+            $nomesDias[] = $dias[$dia] ?? '?';
+        }
+
+        return implode(', ', $nomesDias);
     }
 
-    public function temCartaoPrograma()
+    public function trabalhaNoDia($diaSemana)
     {
-        return !is_null($this->cartao_programa_id);
+        return in_array($diaSemana, $this->dias_semana ?? []);
     }
 } 
