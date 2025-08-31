@@ -112,3 +112,52 @@ Os arquivos originais foram salvos em:
 - ✅ Índices e constraints validados
 
 **Status: ✅ PRONTO PARA PRODUÇÃO** 
+## 🚨 Solução para Problemas em Produção
+
+### Problema: "Table 'usuario' already exists"
+
+Quando o deploy falha com erro de tabela já existente, significa que o banco tem tabelas antigas que não foram removidas pelo `migrate:reset`.
+
+### 🔧 Soluções Disponíveis:
+
+#### 1. SOLUÇÃO RÁPIDA (Recomendada)
+```bash
+./safe_deploy.sh
+```
+- Remove apenas tabelas conflitantes
+- Mantém tabelas do Laravel (users, sessions, etc.)
+- Mais seguro para produção
+
+#### 2. SOLUÇÃO COMPLETA 
+```bash
+./force_clean_deploy.sh
+```
+- Remove TODAS as tabelas
+- Recria tudo do zero
+- Use apenas se necessário
+
+#### 3. DIAGNÓSTICO AUTOMÁTICO
+```bash
+./diagnose_and_fix.sh
+```
+- Analisa o estado atual
+- Sugere a melhor solução
+- Mostra comandos manuais se necessário
+
+### 🔍 Comandos de Diagnóstico Manual:
+
+```bash
+# Ver tabelas existentes
+mysql -u usuario -p database_name -e "SHOW TABLES;"
+
+# Ver status das migrations
+php artisan migrate:status
+
+# Remover tabela específica (se necessário)
+mysql -u usuario -p database_name -e "DROP TABLE IF EXISTS nome_tabela;"
+```
+
+### ⚠️ Importante:
+- Sempre faça backup antes de qualquer operação
+- Teste primeiro em ambiente de desenvolvimento
+- Os scripts já incluem backup automático
