@@ -105,15 +105,14 @@ class PostoTrabalhoSeeder extends Seeder
             ]);
 
             // Criar pontos base para este posto
-            foreach ($postoData['pontos'] as $ordem => $pontoData) {
+            foreach ($postoData['pontos'] as $pontoData) {
                 PontoBase::create([
-                    'posto_id' => $posto->id,
+                    'posto_trabalho_id' => $posto->id,
                     'nome' => $pontoData['nome'],
                     'endereco' => $pontoData['endereco'],
                     'descricao' => $pontoData['descricao'],
                     'latitude' => $pontoData['latitude'],
                     'longitude' => $pontoData['longitude'],
-                    'ordem' => $ordem + 1,
                     'ativo' => true
                 ]);
             }

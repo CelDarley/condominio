@@ -15,11 +15,16 @@ return new class extends Migration
             $table->id(); // bigint unsigned auto_increment
             $table->string('nome', 100);
             $table->text('descricao')->nullable();
-            $table->string('localizacao')->nullable();
+            $table->string('endereco')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
+            $table->string('qr_code')->nullable();
+            $table->foreignId('posto_trabalho_id')->constrained('posto_trabalho')->onDelete('cascade');
             $table->boolean('ativo')->default(true);
             $table->timestamps();
-            
+
             $table->index(['ativo', 'nome']);
+            $table->index('posto_trabalho_id');
         });
     }
 
@@ -30,4 +35,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('ponto_base');
     }
-}; 
+};

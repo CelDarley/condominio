@@ -32,6 +32,7 @@
 
                 <form method="POST" action="{{ route('admin.postos.pontos-base.store', $posto) }}" id="form-ponto-base">
                     @csrf
+                    <input type="hidden" name="posto_trabalho_id" value="{{ $posto->id }}">
 
                     @if ($errors->any())
                         <div class="alert alert-danger">
@@ -216,6 +217,17 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         console.log('Evento submit disparado');
 
+        // Log para debug antes de qualquer modificação
+        const formDataBefore = new FormData(form);
+        console.log('Dados do formulário ANTES do submit:');
+        for (let [key, value] of formDataBefore.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+
+        // Verificar campo posto_trabalho_id especificamente
+        const campoPosto = form.querySelector('input[name="posto_trabalho_id"]');
+        console.log('Campo posto_trabalho_id no submit:', campoPosto ? campoPosto.value : 'não encontrado');
+
         // Desabilitar botão e mostrar loading
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
@@ -284,6 +296,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const elemento = document.getElementById(campo);
         console.log(`Campo ${campo}:`, elemento ? 'encontrado' : 'não encontrado');
     });
+
+    // Verificar campo hidden posto_trabalho_id
+    const campoPosto = form.querySelector('input[name="posto_trabalho_id"]');
+    console.log('Campo posto_trabalho_id:', campoPosto ? 'encontrado' : 'não encontrado');
+    if (campoPosto) {
+        console.log('Valor do campo posto_trabalho_id:', campoPosto.value);
+    }
 });
 
 // Função para testar o formulário

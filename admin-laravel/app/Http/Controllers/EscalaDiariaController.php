@@ -22,10 +22,10 @@ class EscalaDiariaController extends Controller
         $mes = $request->get('mes', now()->month);
         $ano = $request->get('ano', now()->year);
         $vigilanteSelecionado = $request->get('vigilante');
-        
+
         $dataInicio = Carbon::create($ano, $mes, 1);
         $dataFim = $dataInicio->copy()->endOfMonth();
-        
+
         // Buscar ajustes do mês
         $ajustes = EscalaDiaria::with(['usuarioOriginal', 'usuarioSubstituto', 'postoTrabalho'])
             ->porPeriodo($dataInicio, $dataFim)
@@ -46,16 +46,16 @@ class EscalaDiariaController extends Controller
     {
         $data = $request->get('data', now()->format('Y-m-d'));
         $dataCarbon = Carbon::parse($data);
-        
+
         // Obter escalas efetivas para este dia
         $escalasEfetivas = EscalaDiaria::getEscalaEfetiva($data);
-        
+
         // Buscar todos os usuários disponíveis para substituição
         $usuariosDisponiveis = Usuario::where('ativo', true)
             ->where('tipo', 'vigilante')
             ->orderBy('nome')
             ->get();
-            
+
         // Buscar postos de trabalho
         $postos = PostoTrabalho::ativos()->get();
 
@@ -109,7 +109,7 @@ class EscalaDiariaController extends Controller
         try {
             // Buscar escala original
             $escalaOriginal = Escala::findOrFail($request->escala_original_id);
-            
+
             // Verificar se já existe ajuste para esta escala nesta data
             $ajusteExistente = EscalaDiaria::where('data', $request->data)
                 ->where('escala_original_id', $request->escala_original_id)
@@ -237,7 +237,7 @@ class EscalaDiariaController extends Controller
     public function cartoesPrograma(Request $request)
     {
         $postoId = $request->get('posto_id');
-        
+
         if (!$postoId) {
             return response()->json([]);
         }
@@ -250,30 +250,73 @@ class EscalaDiariaController extends Controller
         return response()->json($cartoes);
     }
 
-    public function escalasVigilante($vigilanteId, $ano, $mes)
+        public function escalasVigilante($vigilanteId, $ano, $mes)
     {
         try {
+            \Log::info('Buscando escalas do vigilante', [
+                'vigilante_id' => $vigilanteId,
+                'ano' => $ano,
+                'mes' => $mes
+            ]);
+
             $dataInicio = Carbon::create($ano, $mes, 1);
             $dataFim = $dataInicio->copy()->endOfMonth();
             
             $escalasVigilante = [];
-            
+
             // Percorrer todos os dias do mês
             $dataAtual = $dataInicio->copy();
             while ($dataAtual <= $dataFim) {
-                $escalasEfetivas = EscalaDiaria::getEscalaEfetiva($dataAtual->format('Y-m-d'));
-                
-                // Verificar se o vigilante tem escala neste dia
-                $temEscalaVigilante = $escalasEfetivas->contains(function($escala) use ($vigilanteId) {
-                    return $escala->usuario_id == $vigilanteId;
-                });
-                
-                if ($temEscalaVigilante) {
-                    $escalasVigilante[$dataAtual->format('Y-m-d')] = true;
+                $diaSemana = $dataAtual->dayOfWeek;
+                // Ajustar para padrão brasileiro (0 = segunda, 6 = domingo)
+                $diaSemanaDb = ($diaSemana == 0) ? 6 : $diaSemana - 1;
+
+                // Verificar se o vigilante tem escala semanal neste dia
+                $escalaSemanal = Escala::with(['usuario', 'postoTrabalho', 'cartaoPrograma'])
+                    ->whereJsonContains('dias_semana', $diaSemanaDb)
+                    ->where('usuario_id', $vigilanteId)
+                    ->where('ativo', true)
+                    ->first();
+
+                if ($escalaSemanal) {
+                    \Log::info('Escala semanal encontrada para o vigilante', [
+                        'data' => $dataAtual->format('Y-m-d'),
+                        'vigilante_id' => $vigilanteId,
+                        'posto' => $escalaSemanal->postoTrabalho->nome
+                    ]);
+                    
+                    $escalasVigilante[$dataAtual->format('Y-m-d')] = [
+                        'tipo' => 'escala_semanal',
+                        'posto' => $escalaSemanal->postoTrabalho->nome,
+                        'cartao_programa' => $escalaSemanal->cartaoPrograma ? $escalaSemanal->cartaoPrograma->nome : 'Não definido'
+                    ];
                 }
-                
+
+                // Verificar se o vigilante foi chamado como substituto neste dia
+                $ajusteDiario = EscalaDiaria::with(['usuarioOriginal', 'postoTrabalho', 'cartaoPrograma'])
+                    ->where('data', $dataAtual->format('Y-m-d'))
+                    ->where('usuario_substituto_id', $vigilanteId)
+                    ->where('status', 'ativo')
+                    ->first();
+
+                if ($ajusteDiario) {
+                    $escalasVigilante[$dataAtual->format('Y-m-d')] = [
+                        'tipo' => 'substituicao',
+                        'posto' => $ajusteDiario->postoTrabalho->nome,
+                        'cartao_programa' => $ajusteDiario->cartaoPrograma ? $ajusteDiario->cartaoPrograma->nome : 'Não definido',
+                        'substituindo' => $ajusteDiario->usuarioOriginal->nome
+                    ];
+                }
+
                 $dataAtual->addDay();
             }
+
+            \Log::info('Escalas do vigilante encontradas', [
+                'vigilante_id' => $vigilanteId,
+                'ano' => $ano,
+                'mes' => $mes,
+                'escalas' => $escalasVigilante
+            ]);
 
             return response()->json([
                 'success' => true,

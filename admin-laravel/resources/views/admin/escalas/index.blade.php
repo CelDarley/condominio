@@ -49,7 +49,7 @@
                                             <span class="text-muted">Não definido</span>
                                         @endif
                                     </td>
-                                    <td>{{ $escala->getDiaSemanaNome() }}</td>
+                                    <td>{{ $escala->getDiasSemanaNomes() }}</td>
                                     <td>
                                         <span class="badge badge-{{ $escala->ativo ? 'success' : 'secondary' }}">
                                             {{ $escala->ativo ? 'Ativo' : 'Inativo' }}
@@ -63,8 +63,8 @@
                                             <a href="{{ route('admin.escalas.edit', $escala) }}" class="btn btn-warning btn-sm" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" class="btn btn-danger btn-sm" title="Excluir" 
-                                                    onclick="confirmarExclusaoEscala({{ $escala->id }}, '{{ $escala->usuario->nome ?? 'N/A' }}', '{{ $escala->getDiaSemanaNome() }}')">
+                                            <button type="button" class="btn btn-danger btn-sm" title="Excluir"
+                                                    onclick="confirmarExclusaoEscala({{ $escala->id }}, '{{ $escala->usuario->nome ?? 'N/A' }}', '{{ $escala->getDiasSemanaNomes() }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -110,7 +110,7 @@
                     <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
                     <h6>Tem certeza que deseja excluir esta escala?</h6>
                 </div>
-                
+
                 <div class="alert alert-warning">
                     <div class="row">
                         <div class="col-12">
@@ -124,7 +124,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
                     <strong>Nota:</strong> A escala será desativada (soft delete) e não aparecerá mais nas listagens, mas os dados não serão perdidos permanentemente.
@@ -170,4 +170,4 @@ document.getElementById('btn-confirmar-exclusao-escala').addEventListener('click
 // Log para debug
 console.log('Script de exclusão de escalas carregado');
 </script>
-@endsection 
+@endsection

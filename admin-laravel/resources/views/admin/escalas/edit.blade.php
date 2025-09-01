@@ -16,14 +16,14 @@
                 <form method="POST" action="{{ route('admin.escalas.update', $escala) }}">
                     @csrf
                     @method('PUT')
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="usuario_id" class="form-label">Vigilante <span class="text-danger">*</span></label>
-                                <select class="form-control @error('usuario_id') is-invalid @enderror" 
-                                        id="usuario_id" 
-                                        name="usuario_id" 
+                                <select class="form-control @error('usuario_id') is-invalid @enderror"
+                                        id="usuario_id"
+                                        name="usuario_id"
                                         required>
                                     <option value="">Selecione um vigilante</option>
                                     @foreach($usuarios as $usuario)
@@ -37,13 +37,13 @@
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="posto_trabalho_id" class="form-label">Posto de Trabalho <span class="text-danger">*</span></label>
-                                <select class="form-control @error('posto_trabalho_id') is-invalid @enderror" 
-                                        id="posto_trabalho_id" 
-                                        name="posto_trabalho_id" 
+                                <select class="form-control @error('posto_trabalho_id') is-invalid @enderror"
+                                        id="posto_trabalho_id"
+                                        name="posto_trabalho_id"
                                         required
                                         onchange="carregarCartoesPrograma()">
                                     <option value="">Selecione um posto</option>
@@ -59,13 +59,13 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="cartao_programa_id" class="form-label">Cartão Programa</label>
-                                <select class="form-control @error('cartao_programa_id') is-invalid @enderror" 
-                                        id="cartao_programa_id" 
+                                <select class="form-control @error('cartao_programa_id') is-invalid @enderror"
+                                        id="cartao_programa_id"
                                         name="cartao_programa_id">
                                     <option value="">Carregando...</option>
                                 </select>
@@ -78,36 +78,37 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="dia_semana" class="form-label">Dia da Semana <span class="text-danger">*</span></label>
-                                <select class="form-control @error('dia_semana') is-invalid @enderror" 
-                                        id="dia_semana" 
-                                        name="dia_semana" 
+                                <label for="dias_semana" class="form-label">Dias da Semana <span class="text-danger">*</span></label>
+                                <select class="form-control @error('dias_semana') is-invalid @enderror"
+                                        id="dias_semana"
+                                        name="dias_semana[]"
+                                        multiple
                                         required>
-                                    <option value="">Selecione o dia</option>
                                     @foreach($diasSemana as $numero => $nome)
-                                        <option value="{{ $numero }}" {{ (old('dia_semana') ?? $escala->dia_semana) == $numero ? 'selected' : '' }}>
+                                        <option value="{{ $numero }}" {{ (old('dias_semana') ? in_array($numero, old('dias_semana')) : (is_array($escala->dias_semana) && in_array($numero, $escala->dias_semana))) ? 'selected' : '' }}>
                                             {{ $nome }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('dia_semana')
+                                @error('dias_semana')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <small class="form-text text-muted">Pressione Ctrl (ou Cmd no Mac) para selecionar múltiplos dias</small>
                             </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Status</label>
                                 <div class="form-check mt-2">
-                                    <input type="checkbox" 
-                                           class="form-check-input" 
-                                           id="ativo" 
-                                           name="ativo" 
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           id="ativo"
+                                           name="ativo"
                                            {{ (old('ativo') ?? $escala->ativo) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="ativo">
                                         Escala ativa
@@ -116,30 +117,30 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     @if($usuarios->isEmpty())
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Atenção:</strong> Não há vigilantes cadastrados. 
+                        <strong>Atenção:</strong> Não há vigilantes cadastrados.
                         <a href="{{ route('admin.usuarios.create') }}" class="alert-link">Cadastre um vigilante primeiro</a>.
                     </div>
                     @endif
-                    
+
                     @if($postos->isEmpty())
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Atenção:</strong> Não há postos de trabalho cadastrados. 
+                        <strong>Atenção:</strong> Não há postos de trabalho cadastrados.
                         <a href="{{ route('admin.postos.create') }}" class="alert-link">Cadastre um posto primeiro</a>.
                     </div>
                     @endif
-                    
+
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
                         <strong>Observação:</strong> Cada vigilante pode ter apenas uma escala ativa por dia da semana.
                     </div>
-                    
+
                     <hr>
-                    
+
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('admin.escalas.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Voltar
@@ -161,21 +162,21 @@ function carregarCartoesPrograma() {
     const postoId = document.getElementById('posto_trabalho_id').value;
     const cartaoSelect = document.getElementById('cartao_programa_id');
     const cartaoAtual = {{ $escala->cartao_programa_id ?? 'null' }};
-    
+
     // Limpar opções existentes
     cartaoSelect.innerHTML = '<option value="">Carregando...</option>';
-    
+
     if (!postoId) {
         cartaoSelect.innerHTML = '<option value="">Primeiro selecione um posto de trabalho</option>';
         return;
     }
-    
+
     // Buscar cartões programa via AJAX
     fetch(`/admin/cartoes-programa/por-posto/${postoId}`)
         .then(response => response.json())
         .then(data => {
             cartaoSelect.innerHTML = '<option value="">Nenhum cartão programa específico</option>';
-            
+
             if (data.length === 0) {
                 cartaoSelect.innerHTML += '<option value="" disabled>Nenhum cartão programa disponível para este posto</option>';
             } else {
@@ -183,12 +184,12 @@ function carregarCartoesPrograma() {
                     const option = document.createElement('option');
                     option.value = cartao.id;
                     option.textContent = `${cartao.nome} (${cartao.horario_inicio} - ${cartao.horario_fim})`;
-                    
+
                     // Selecionar o cartão atual se for o caso
                     if (cartao.id == cartaoAtual) {
                         option.selected = true;
                     }
-                    
+
                     cartaoSelect.appendChild(option);
                 });
             }
@@ -208,4 +209,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-@endsection 
+@endsection

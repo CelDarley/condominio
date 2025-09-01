@@ -104,7 +104,10 @@ class MoradorSeeder extends Seeder
                     'marca' => $veiculoData['marca'],
                     'modelo' => $veiculoData['modelo'],
                     'placa' => $veiculoData['placa'],
-                    'cor' => $veiculoData['cor']
+                    'cor' => $veiculoData['cor'],
+                    'ano' => rand(2015, 2023),
+                    'tipo' => 'carro',
+                    'ativo' => true
                 ]);
             }
         }

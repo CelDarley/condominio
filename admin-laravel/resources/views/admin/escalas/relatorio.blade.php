@@ -19,6 +19,34 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Filtro de Vigilante -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <form method="GET" action="{{ route('admin.escalas.relatorio') }}" class="form-inline">
+                            <div class="form-group mr-3">
+                                <label for="vigilante_id" class="mr-2">Filtrar por Vigilante:</label>
+                                <select name="vigilante_id" id="vigilante_id" class="form-control" onchange="this.form.submit()">
+                                    <option value="">Todos os Vigilantes</option>
+                                    @foreach($usuarios as $usuario)
+                                        <option value="{{ $usuario->id }}" {{ request('vigilante_id') == $usuario->id ? 'selected' : '' }}>
+                                            {{ $usuario->nome }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    @if(request('vigilante_id') && $totalHoras > 0)
+                        <div class="col-md-6">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-clock"></i>
+                                <strong>Total de Horas Trabalhadas:</strong>
+                                {{ floor($totalHoras / 60) }}h {{ $totalHoras % 60 }}min por semana
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
                 @if(!empty($escalas))
                     @foreach($diasSemana as $diaNumero => $diaNome)
                         <div class="card mb-3 border-left-primary">
@@ -40,6 +68,7 @@
                                                 <tr>
                                                     <th>Vigilante</th>
                                                     <th>Posto</th>
+                                                    <th>Horário</th>
                                                     <th>Status</th>
                                                     <th>Ações</th>
                                                 </tr>
@@ -54,6 +83,11 @@
                                                     <td>
                                                         <i class="fas fa-map-marker-alt text-info"></i>
                                                         {{ $escala->postoTrabalho->nome ?? 'N/A' }}
+                                                    </td>
+                                                    <td>
+                                                        <i class="fas fa-clock text-success"></i>
+                                                        {{ \Carbon\Carbon::parse($escala->horario_inicio)->format('H:i') }} - 
+                                                        {{ \Carbon\Carbon::parse($escala->horario_fim)->format('H:i') }}
                                                     </td>
                                                     <td>
                                                         <span class="badge badge-{{ $escala->ativo ? 'success' : 'secondary' }}">
@@ -104,4 +138,4 @@
     border-left: 0.25rem solid #4e73df !important;
 }
 </style>
-@endsection 
+@endsection

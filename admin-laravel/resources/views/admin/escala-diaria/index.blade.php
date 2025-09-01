@@ -23,7 +23,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        
+
                         <!-- Navegação de mês -->
                         <button class="btn btn-outline-primary btn-sm me-2" onclick="navegarMes(-1)">
                             <i class="fas fa-chevron-left"></i> Anterior
@@ -91,7 +91,8 @@
                                 <span class="badge bg-success me-1">&nbsp;</span> Hoje
                             </small>
                             <small class="text-muted me-4" id="legenda-vigilante" style="display: none;">
-                                <span class="badge bg-info me-1">&nbsp;</span> Vigilante escalado
+                                <span class="badge bg-info me-1">&nbsp;</span> Escala semanal
+                                <span class="badge bg-warning me-1">&nbsp;</span> Substituição
                             </small>
                         </div>
                     </div>
@@ -136,7 +137,7 @@
                 <div class="modal-body">
                     <input type="hidden" id="ajuste-data" name="data">
                     <input type="hidden" id="ajuste-escala-id" name="escala_original_id">
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Data:</label>
@@ -147,7 +148,7 @@
                             <p class="form-control-plaintext" id="ajuste-posto-display"></p>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Usuário Original:</label>
@@ -160,7 +161,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="ajuste-cartao-programa" class="form-label">Cartão Programa:</label>
@@ -288,13 +289,13 @@ function navegarMes(direcao) {
         mesAtual = 12;
         anoAtual--;
     }
-    
+
     // Construir URL com filtro de vigilante se houver
     let url = `?mes=${mesAtual}&ano=${anoAtual}`;
     if (vigilanteSelecionado) {
         url += `&vigilante=${vigilanteSelecionado}`;
     }
-    
+
     window.location.href = url;
 }
 
@@ -307,29 +308,29 @@ function gerarCalendario() {
     const primeiroDia = new Date(anoAtual, mesAtual - 1, 1);
     const ultimoDia = new Date(anoAtual, mesAtual, 0);
     const hoje = new Date();
-    
+
     const inicioCalendario = new Date(primeiroDia);
     inicioCalendario.setDate(inicioCalendario.getDate() - primeiroDia.getDay());
-    
+
     const tbody = document.getElementById('calendario-body');
     tbody.innerHTML = '';
-    
+
     let dataAtual = new Date(inicioCalendario);
-    
+
     for (let semana = 0; semana < 6; semana++) {
         const linha = document.createElement('tr');
-        
+
         for (let dia = 0; dia < 7; dia++) {
             const celula = document.createElement('td');
             const dataStr = dataAtual.toISOString().split('T')[0];
-            
+
             celula.onclick = () => abrirEscalasDia(dataStr);
-            
+
             const isOutroMes = dataAtual.getMonth() !== mesAtual - 1;
             const isHoje = dataAtual.toDateString() === hoje.toDateString();
             const temAjustes = ajustesData[dataStr] && ajustesData[dataStr].length > 0;
-            const temEscalaVigilante = vigilantesEscalas[dataStr] || false;
-            
+            const temEscalaVigilante = vigilantesEscalas[dataStr] ? true : false;
+
             // Aplicar classes baseadas no estado
             let classes = ['day-cell'];
             if (isOutroMes) {
@@ -337,7 +338,7 @@ function gerarCalendario() {
             } else if (isHoje) {
                 classes.push('day-today');
             }
-            
+
             if (temAjustes && temEscalaVigilante) {
                 classes.push('day-with-vigilante-escala-and-adjustment');
             } else if (temEscalaVigilante) {
@@ -345,30 +346,35 @@ function gerarCalendario() {
             } else if (temAjustes) {
                 classes.push('day-with-adjustments');
             }
-            
+
             celula.className = classes.join(' ');
-            
+
             let badges = '';
             if (temAjustes) {
                 badges += `<span class="badge bg-primary adjustment-badge">${ajustesData[dataStr].length}</span>`;
             }
             if (temEscalaVigilante) {
-                badges += `<span class="badge bg-info vigilante-badge">V</span>`;
+                const escalaInfo = vigilantesEscalas[dataStr];
+                if (escalaInfo.tipo === 'substituicao') {
+                    badges += `<span class="badge bg-warning vigilante-badge" title="Substituindo: ${escalaInfo.substituindo}">S</span>`;
+                } else {
+                    badges += `<span class="badge bg-info vigilante-badge" title="Escala semanal">V</span>`;
+                }
             }
-            
+
             celula.innerHTML = `
                 <div class="day-number">${dataAtual.getDate()}</div>
                 <div class="day-content">
                     ${badges}
                 </div>
             `;
-            
+
             linha.appendChild(celula);
             dataAtual.setDate(dataAtual.getDate() + 1);
         }
-        
+
         tbody.appendChild(linha);
-        
+
         // Parar se já passou do mês atual
         if (dataAtual.getMonth() !== mesAtual - 1 && semana >= 4) {
             break;
@@ -379,16 +385,16 @@ function gerarCalendario() {
 function abrirEscalasDia(data) {
     const modal = new bootstrap.Modal(document.getElementById('modalEscalaDia'));
     const modalBody = document.getElementById('modal-escala-body');
-    
+
     modalBody.innerHTML = `
         <div class="text-center">
             <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
             <p class="mt-2">Carregando escalas...</p>
         </div>
     `;
-    
+
     modal.show();
-    
+
     fetch(`/admin/escala-diaria/calendario?data=${data}`)
         .then(response => response.json())
         .then(data => {
@@ -411,7 +417,7 @@ function montarConteudoModal(data) {
             <h6><i class="fas fa-calendar-day me-2"></i>${data.data_formatada} - ${data.dia_semana}</h6>
         </div>
     `;
-    
+
     if (data.escalas.length === 0) {
         html += `
             <div class="alert alert-info text-center">
@@ -432,12 +438,12 @@ function montarConteudoModal(data) {
                     </tr>
                 </thead>
                 <tbody>`;
-        
+
         data.escalas.forEach(escala => {
             const isAjustado = escala.tem_ajuste;
             const badgeClass = isAjustado ? 'bg-primary' : 'bg-success';
             const statusText = isAjustado ? 'Ajustado' : 'Normal';
-            
+
             html += `
                 <tr class="${isAjustado ? 'table-primary' : ''}">
                     <td>${escala.posto.nome}</td>
@@ -462,10 +468,10 @@ function montarConteudoModal(data) {
                 </tr>
             `;
         });
-        
+
         html += `</tbody></table></div>`;
     }
-    
+
     return html;
 }
 
@@ -480,24 +486,24 @@ function editarAjuste(data, escalaId, postoId, postoNome, usuarioOriginal, ajust
         .then(response => response.json())
         .then(responseData => {
             usuariosDisponiveis = responseData.usuarios_disponiveis;
-            
+
             // Preencher modal
             document.getElementById('ajuste-data').value = data;
             document.getElementById('ajuste-escala-id').value = escalaId;
             document.getElementById('ajuste-data-display').textContent = responseData.data_formatada;
             document.getElementById('ajuste-posto-display').textContent = postoNome;
             document.getElementById('ajuste-usuario-original-display').textContent = usuarioOriginal;
-            
+
             // Preencher select de usuários
             const selectUsuario = document.getElementById('ajuste-usuario-substituto');
             selectUsuario.innerHTML = '<option value="">Selecione um substituto</option>';
             usuariosDisponiveis.forEach(user => {
                 selectUsuario.innerHTML += `<option value="${user.id}">${user.nome}</option>`;
             });
-            
+
             // Carregar cartões programa do posto
             carregarCartoesPrograma(postoId);
-            
+
             // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById('modalAjuste'));
             modal.show();
@@ -514,7 +520,7 @@ function carregarCartoesPrograma(postoId) {
         .then(data => {
             const select = document.getElementById('ajuste-cartao-programa');
             select.innerHTML = '<option value="">Manter cartão original</option>';
-            
+
             data.forEach(cartao => {
                 select.innerHTML += `<option value="${cartao.id}">${cartao.nome} (${cartao.horario_inicio} - ${cartao.horario_fim})</option>`;
             });
@@ -528,7 +534,7 @@ function cancelarAjuste(ajusteId) {
     if (!confirm('Tem certeza que deseja cancelar este ajuste?')) {
         return;
     }
-    
+
     fetch(`/admin/escala-diaria/${ajusteId}`, {
         method: 'DELETE',
         headers: {
@@ -554,10 +560,10 @@ function cancelarAjuste(ajusteId) {
 // Manipular formulário de ajuste
 document.getElementById('form-ajuste').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const formData = new FormData(this);
     const data = Object.fromEntries(formData);
-    
+
     fetch('/admin/escala-diaria', {
         method: 'POST',
         headers: {
@@ -588,11 +594,11 @@ document.getElementById('form-ajuste').addEventListener('submit', function(e) {
 function filtrarPorVigilante() {
     vigilanteSelecionado = document.getElementById('filtro-vigilante').value;
     const legendaVigilante = document.getElementById('legenda-vigilante');
-    
+
     if (vigilanteSelecionado) {
         // Mostrar legenda do vigilante
         legendaVigilante.style.display = 'inline-block';
-        
+
         // Carregar escalas do vigilante para o mês
         carregarEscalasVigilante(vigilanteSelecionado);
     } else {
@@ -616,4 +622,4 @@ function carregarEscalasVigilante(vigilanteId) {
 }
 </script>
 
-@endsection 
+@endsection

@@ -72,19 +72,19 @@ class AdminController extends Controller
             'totalPostos' => PostoTrabalho::ativos()->count(),
             'totalPontosBases' => PontoBase::ativos()->count(),
             'escalasAtivas' => Escala::ativos()->count(),
-            'usuariosRecentes' => Usuario::latest('data_criacao')->take(5)->get(),
+            'usuariosRecentes' => Usuario::latest('created_at')->take(5)->get(),
             'usuariosAdmin' => Usuario::where('tipo', 'admin')->get(),
-            
+
             // Estatísticas por tipo
             'estatisticasTipos' => [
                 'admin' => Usuario::where('tipo', 'admin')->count(),
                 'vigilante' => Usuario::where('tipo', 'vigilante')->count(),
                 'morador' => Usuario::where('tipo', 'morador')->count(),
             ],
-            
+
             // Escalas por dia da semana - ajustado para nova estrutura
             'escalasPorDia' => $this->getEscalasPorDia(),
-                
+
             // Postos com mais pontos base
             'postosComPontos' => PostoTrabalho::withCount(['pontosBase' => function($query) {
                 $query->where('ativo', true);
@@ -105,7 +105,7 @@ class AdminController extends Controller
     {
         $escalas = Escala::where('ativo', true)->get();
         $escalasPorDia = [];
-        
+
         foreach ($escalas as $escala) {
             if ($escala->dias_semana && is_array($escala->dias_semana)) {
                 foreach ($escala->dias_semana as $dia) {
@@ -113,7 +113,7 @@ class AdminController extends Controller
                 }
             }
         }
-        
+
         return $escalasPorDia;
     }
 
@@ -122,7 +122,7 @@ class AdminController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect()->route('admin.login')->with('success', 'Logout realizado com sucesso.');
     }
 }

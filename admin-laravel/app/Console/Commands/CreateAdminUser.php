@@ -14,7 +14,7 @@ class CreateAdminUser extends Command
      *
      * @var string
      */
-    protected $signature = 'admin:create-user 
+    protected $signature = 'admin:create-user
                             {--name= : Nome do administrador}
                             {--email= : Email do administrador}
                             {--password= : Senha do administrador}
@@ -76,13 +76,12 @@ class CreateAdminUser extends Command
                 'tipo' => 'admin',
                 'ativo' => true,
                 'telefone' => $phone,
-                'data_criacao' => now(),
             ]);
 
             $this->newLine();
             $this->info('✅ Usuário administrador criado com sucesso!');
             $this->newLine();
-            
+
             $this->table(
                 ['Campo', 'Valor'],
                 [

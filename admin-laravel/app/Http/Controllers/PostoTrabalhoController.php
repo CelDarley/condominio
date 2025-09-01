@@ -100,7 +100,7 @@ class PostoTrabalhoController extends Controller
                     'posto_id' => $posto->id,
                     'pontos_ativos' => $pontosAtivos
                 ]);
-                
+
                 return redirect()->route('admin.postos.index')
                     ->with('error', "Não é possível desativar este posto pois ele possui {$pontosAtivos} ponto(s) base ativo(s). Desative os pontos base primeiro.");
             }
@@ -112,7 +112,7 @@ class PostoTrabalhoController extends Controller
                     'posto_id' => $posto->id,
                     'cartoes_ativos' => $cartoesAtivos
                 ]);
-                
+
                 return redirect()->route('admin.postos.index')
                     ->with('error', "Não é possível desativar este posto pois ele possui {$cartoesAtivos} cartão(ões) programa ativo(s). Desative os cartões primeiro.");
             }
@@ -124,7 +124,7 @@ class PostoTrabalhoController extends Controller
                     'posto_id' => $posto->id,
                     'escalas_ativas' => $escalasAtivas
                 ]);
-                
+
                 return redirect()->route('admin.postos.index')
                     ->with('error', "Não é possível desativar este posto pois ele possui {$escalasAtivas} escala(s) ativa(s). Desative as escalas primeiro.");
             }
@@ -178,6 +178,14 @@ class PostoTrabalhoController extends Controller
             'session_id' => session()->getId()
         ]);
 
+        // Log adicional para debug dos campos específicos
+        \Log::info('Campos específicos do request', [
+            'posto_trabalho_id_from_request' => $request->input('posto_trabalho_id'),
+            'posto_trabalho_id_from_route' => $posto->id,
+            'has_posto_trabalho_id' => $request->has('posto_trabalho_id'),
+            'all_keys' => array_keys($request->all())
+        ]);
+
         try {
             $request->validate([
                 'nome' => 'required|string|max:100',
@@ -188,7 +196,7 @@ class PostoTrabalhoController extends Controller
             ]);
 
             $pontoData = [
-                'posto_id' => $posto->id,
+                'posto_trabalho_id' => $posto->id,
                 'nome' => $request->nome,
                 'endereco' => $request->endereco,
                 'descricao' => $request->descricao ?: null,
@@ -196,6 +204,9 @@ class PostoTrabalhoController extends Controller
                 'longitude' => $request->longitude ?: null,
                 'ativo' => $request->has('ativo') || $request->input('ativo') === 'on' || $request->boolean('ativo')
             ];
+
+            // Log adicional para debug
+            \Log::info('Dados finais para criação', $pontoData);
 
             \Log::info('Dados do ponto base para criação', $pontoData);
 
@@ -227,7 +238,7 @@ class PostoTrabalhoController extends Controller
     public function editPontoBase(PostoTrabalho $posto, PontoBase $ponto)
     {
         // Verificar se o ponto pertence ao posto
-        if ($ponto->posto_id !== $posto->id) {
+        if ($ponto->posto_trabalho_id !== $posto->id) {
             abort(404, 'Ponto base não encontrado neste posto.');
         }
 
@@ -238,7 +249,7 @@ class PostoTrabalhoController extends Controller
     public function updatePontoBase(Request $request, PostoTrabalho $posto, PontoBase $ponto)
     {
         // Verificar se o ponto pertence ao posto
-        if ($ponto->posto_id !== $posto->id) {
+        if ($ponto->posto_trabalho_id !== $posto->id) {
             abort(404, 'Ponto base não encontrado neste posto.');
         }
 
@@ -260,6 +271,13 @@ class PostoTrabalhoController extends Controller
                 'ativo' => $request->has('ativo') || $request->input('ativo') === 'on' || $request->boolean('ativo')
             ];
 
+            // Log para debug
+            \Log::info('Dados para atualização do ponto base', [
+                'ponto_id' => $ponto->id,
+                'posto_id' => $posto->id,
+                'dados' => $pontoData
+            ]);
+
             $ponto->update($pontoData);
 
             return redirect()->route('admin.postos.pontos-base', $posto)
@@ -280,7 +298,7 @@ class PostoTrabalhoController extends Controller
     public function destroyPontoBase(PostoTrabalho $posto, PontoBase $ponto)
     {
         // Verificar se o ponto pertence ao posto
-        if ($ponto->posto_id !== $posto->id) {
+        if ($ponto->posto_trabalho_id !== $posto->id) {
             abort(404, 'Ponto base não encontrado neste posto.');
         }
 

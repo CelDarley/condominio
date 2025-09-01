@@ -17,6 +17,7 @@ return new class extends Migration
             $table->text('descricao')->nullable();
             $table->foreignId('posto_trabalho_id')->constrained('posto_trabalho')->onDelete('cascade');
             $table->foreignId('usuario_id')->constrained('usuario')->onDelete('cascade');
+            $table->foreignId('cartao_programa_id')->nullable()->constrained('cartao_programas')->onDelete('set null');
             $table->date('data_inicio');
             $table->date('data_fim')->nullable();
             $table->time('horario_inicio');
@@ -25,7 +26,7 @@ return new class extends Migration
             $table->boolean('ativo')->default(true);
             $table->text('observacoes')->nullable();
             $table->timestamps();
-            
+
             $table->index(['ativo', 'data_inicio', 'data_fim']);
             $table->index(['usuario_id', 'ativo']);
             $table->index(['posto_trabalho_id', 'ativo']);
@@ -39,4 +40,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('escala');
     }
-}; 
+};

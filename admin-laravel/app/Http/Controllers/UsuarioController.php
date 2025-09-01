@@ -65,7 +65,6 @@ class UsuarioController extends Controller
             'senha_hash' => Hash::make($request->senha),
             'tipo' => $request->tipo,
             'ativo' => true,
-            'data_criacao' => now()
         ]);
 
         return redirect()->route('admin.usuarios.index')
@@ -105,7 +104,6 @@ class UsuarioController extends Controller
             'telefone' => $request->telefone,
             'tipo' => $request->tipo,
             'ativo' => $request->has('ativo') ? 1 : 0,
-            'data_atualizacao' => now()
         ];
 
         if ($request->filled('nova_senha')) {
@@ -116,7 +114,7 @@ class UsuarioController extends Controller
         \Log::info('Dados a serem atualizados', $data);
 
         $resultado = $usuario->update($data);
-        
+
         \Log::info('Resultado do update', ['sucesso' => $resultado]);
 
         return redirect()->route('admin.usuarios.index')

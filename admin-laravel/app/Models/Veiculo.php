@@ -14,11 +14,24 @@ class Veiculo extends Model
         'marca',
         'modelo',
         'placa',
-        'cor'
+        'cor',
+        'ano',
+        'tipo',
+        'ativo'
+    ];
+
+    protected $casts = [
+        'ativo' => 'boolean'
     ];
 
     public function morador()
     {
         return $this->belongsTo(Morador::class);
+    }
+
+    // Scopes
+    public function scopeAtivos($query)
+    {
+        return $query->where('ativo', true);
     }
 }

@@ -8,7 +8,7 @@ use Carbon\Carbon;
 class EscalaDiaria extends Model
 {
     protected $table = 'escala_diaria';
-    
+
     protected $fillable = [
         'data',
         'escala_original_id',
@@ -95,7 +95,7 @@ class EscalaDiaria extends Model
             5 => 'Sexta-feira',
             6 => 'Sábado'
         ];
-        
+
         return $dias[$this->data->dayOfWeek];
     }
 
@@ -108,24 +108,24 @@ class EscalaDiaria extends Model
 
         // Buscar escalas semanais para este dia
         $escalasSemanais = Escala::with(['usuario', 'postoTrabalho', 'cartaoPrograma'])
-            ->where('dia_semana', $diaSemanaDb)
+            ->whereJsonContains('dias_semana', $diaSemanaDb)
             ->where('ativo', true);
-            
+
         if ($postoId) {
             $escalasSemanais->where('posto_trabalho_id', $postoId);
         }
-        
+
         $escalasSemanais = $escalasSemanais->get();
 
         // Buscar ajustes diários para esta data
         $ajustesDiarios = self::with(['usuarioSubstituto', 'postoTrabalho', 'cartaoPrograma'])
             ->where('data', $data)
             ->where('status', 'ativo');
-            
+
         if ($postoId) {
             $ajustesDiarios->where('posto_trabalho_id', $postoId);
         }
-        
+
         $ajustesDiarios = $ajustesDiarios->get()->keyBy('escala_original_id');
 
         // Aplicar ajustes diários às escalas semanais

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Escala;
 use App\Models\Usuario;
 use App\Models\PostoTrabalho;
+use Carbon\Carbon;
 
 class EscalaController extends Controller
 {
@@ -18,7 +19,7 @@ class EscalaController extends Controller
     {
         $escalas = Escala::with(['usuario', 'postoTrabalho', 'cartaoPrograma'])
             ->ativos()
-            ->orderBy('dia_semana')
+            ->orderBy('data_inicio')
             ->get();
 
         return view('admin.escalas.index', compact('escalas'));
@@ -29,13 +30,13 @@ class EscalaController extends Controller
         $usuarios = Usuario::where('tipo', 'vigilante')
             ->where('ativo', true)
             ->get();
-        
+
         $postos = PostoTrabalho::ativos()->get();
 
         $diasSemana = [
             0 => 'Segunda-feira',
             1 => 'Terça-feira',
-            2 => 'Quarta-feira', 
+            2 => 'Quarta-feira',
             3 => 'Quinta-feira',
             4 => 'Sexta-feira',
             5 => 'Sábado',
@@ -87,13 +88,13 @@ class EscalaController extends Controller
         $usuario_id = $request->usuario_id;
         $posto_trabalho_id = $request->posto_trabalho_id;
         $dias = $request->dias;
-        
+
         \Log::info('Dados processados', [
             'usuario_id' => $usuario_id,
             'posto_trabalho_id' => $posto_trabalho_id,
             'dias_count' => count($dias)
         ]);
-        
+
         $escalasCreated = 0;
         $errors = [];
 
@@ -115,7 +116,7 @@ class EscalaController extends Controller
 
                 // Verificar se já existe escala para este usuário neste dia
                 $escalaExistente = Escala::where('usuario_id', $usuario_id)
-                    ->where('dia_semana', $dia_semana)
+                    ->whereJsonContains('dias_semana', $dia_semana)
                     ->where('ativo', true)
                     ->first();
 
@@ -126,10 +127,14 @@ class EscalaController extends Controller
 
                 // Criar escala
                 Escala::create([
+                    'nome' => "Escala {$this->getNomeDiaSemana($dia_semana)}",
                     'usuario_id' => $usuario_id,
                     'posto_trabalho_id' => $posto_trabalho_id,
                     'cartao_programa_id' => $dadosDia['cartao_programa_id'] ?: null,
-                    'dia_semana' => $dia_semana,
+                    'data_inicio' => now()->format('Y-m-d'),
+                    'horario_inicio' => '08:00',
+                    'horario_fim' => '18:00',
+                    'dias_semana' => [$dia_semana],
                     'ativo' => true
                 ]);
 
@@ -176,14 +181,14 @@ class EscalaController extends Controller
     {
         $dias = [
             0 => 'Segunda-feira',
-            1 => 'Terça-feira', 
+            1 => 'Terça-feira',
             2 => 'Quarta-feira',
             3 => 'Quinta-feira',
             4 => 'Sexta-feira',
             5 => 'Sábado',
             6 => 'Domingo'
         ];
-        
+
         return $dias[$numero] ?? "Dia {$numero}";
     }
 
@@ -198,7 +203,7 @@ class EscalaController extends Controller
         $usuarios = Usuario::where('tipo', 'vigilante')
             ->where('ativo', true)
             ->get();
-        
+
         $postos = PostoTrabalho::ativos()->get();
 
         $diasSemana = [
@@ -220,26 +225,31 @@ class EscalaController extends Controller
             'usuario_id' => 'required|exists:usuario,id',
             'posto_trabalho_id' => 'required|exists:posto_trabalho,id',
             'cartao_programa_id' => 'nullable|exists:cartao_programa,id',
-            'dia_semana' => 'required|integer|between:0,6',
+            'dias_semana' => 'required|array',
+            'dias_semana.*' => 'integer|between:0,6',
             'ativo' => 'boolean'
         ]);
 
         // Verificar conflitos (exceto a própria escala)
         $escalaExistente = Escala::where('usuario_id', $request->usuario_id)
-            ->where('dia_semana', $request->dia_semana)
             ->where('ativo', true)
             ->where('id', '!=', $escala->id)
+            ->where(function($query) use ($request) {
+                foreach ($request->dias_semana as $dia) {
+                    $query->orWhereJsonContains('dias_semana', $dia);
+                }
+            })
             ->first();
 
         if ($escalaExistente) {
-            return back()->withErrors(['dia_semana' => 'Já existe uma escala ativa para este usuário neste dia da semana.']);
+            return back()->withErrors(['dias_semana' => 'Já existe uma escala ativa para este usuário em um dos dias selecionados.']);
         }
 
         $escala->update([
             'usuario_id' => $request->usuario_id,
             'posto_trabalho_id' => $request->posto_trabalho_id,
             'cartao_programa_id' => $request->cartao_programa_id ?: null,
-            'dia_semana' => $request->dia_semana,
+            'dias_semana' => $request->dias_semana,
             'ativo' => $request->has('ativo')
         ]);
 
@@ -261,7 +271,7 @@ class EscalaController extends Controller
     {
         $escalas = Escala::with(['postoTrabalho', 'cartaoPrograma'])
             ->where('usuario_id', $usuarioId)
-            ->where('dia_semana', $diaSemana)
+            ->whereJsonContains('dias_semana', $diaSemana)
             ->where('ativo', true)
             ->get();
 
@@ -269,23 +279,62 @@ class EscalaController extends Controller
     }
 
     // Relatório de escalas por período
-    public function relatorio()
+    public function relatorio(Request $request)
     {
-        $escalas = Escala::with(['usuario', 'postoTrabalho', 'cartaoPrograma'])
-            ->ativos()
-            ->get()
-            ->groupBy('dia_semana');
+        $query = Escala::with(['usuario', 'postoTrabalho', 'cartaoPrograma'])
+            ->ativos();
+
+        // Filtro por vigilante
+        if ($request->filled('vigilante_id')) {
+            $query->where('usuario_id', $request->vigilante_id);
+        }
+
+        $escalas = $query->get()
+            ->groupBy(function($escala) {
+                // Agrupar por todos os dias da semana da escala
+                return $escala->dias_semana;
+            });
+
+        // Calcular total de horas trabalhadas
+        $totalHoras = 0;
+        if ($request->filled('vigilante_id')) {
+            $escalasFiltradas = Escala::with(['usuario', 'postoTrabalho'])
+                ->where('usuario_id', $request->vigilante_id)
+                ->ativos()
+                ->get();
+
+            foreach ($escalasFiltradas as $escala) {
+                // Os horários já são objetos Carbon
+                $horarioInicio = $escala->horario_inicio;
+                $horarioFim = $escala->horario_fim;
+                
+                // Se o horário de fim é menor que o de início, significa que passa da meia-noite
+                if ($horarioFim < $horarioInicio) {
+                    $horarioFim = $horarioFim->copy()->addDay();
+                }
+                
+                $diferenca = abs($horarioFim->diffInMinutes($horarioInicio));
+                
+                // Multiplicar pelos dias da semana
+                $totalHoras += ($diferenca * count($escala->dias_semana));
+            }
+        }
 
         $diasSemana = [
             0 => 'Segunda-feira',
             1 => 'Terça-feira',
             2 => 'Quarta-feira',
-            3 => 'Quinta-feira', 
+            3 => 'Quinta-feira',
             4 => 'Sexta-feira',
             5 => 'Sábado',
             6 => 'Domingo'
         ];
 
-        return view('admin.escalas.relatorio', compact('escalas', 'diasSemana'));
+        $usuarios = Usuario::where('tipo', 'vigilante')
+            ->where('ativo', true)
+            ->orderBy('nome')
+            ->get();
+
+        return view('admin.escalas.relatorio', compact('escalas', 'diasSemana', 'usuarios', 'totalHoras'));
     }
 }

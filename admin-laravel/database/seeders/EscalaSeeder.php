@@ -82,7 +82,7 @@ class EscalaSeeder extends Seeder
 
         foreach ($escalasData as $vigilanteData) {
             $vigilante = Usuario::where('email', $vigilanteData['vigilante'])->first();
-            
+
             if (!$vigilante) {
                 $this->command->warn("Vigilante {$vigilanteData['vigilante']} não encontrado.");
                 continue;
@@ -90,7 +90,7 @@ class EscalaSeeder extends Seeder
 
             foreach ($vigilanteData['escalas'] as $escalaData) {
                 $posto = $postos->where('nome', $escalaData['posto'])->first();
-                
+
                 if (!$posto) {
                     $this->command->warn("Posto {$escalaData['posto']} não encontrado.");
                     continue;
@@ -107,7 +107,7 @@ class EscalaSeeder extends Seeder
                 foreach ($escalaData['dias'] as $diaSemana) {
                     // Verificar se já existe escala para este vigilante neste dia
                     $escalaExistente = Escala::where('usuario_id', $vigilante->id)
-                        ->where('dia_semana', $diaSemana)
+                        ->whereJsonContains('dias_semana', $diaSemana)
                         ->where('ativo', true)
                         ->first();
 
@@ -117,10 +117,14 @@ class EscalaSeeder extends Seeder
                     }
 
                     Escala::create([
+                        'nome' => "Escala {$vigilante->nome} - {$posto->nome}",
                         'usuario_id' => $vigilante->id,
                         'posto_trabalho_id' => $posto->id,
                         'cartao_programa_id' => $cartaoPrograma ? $cartaoPrograma->id : null,
-                        'dia_semana' => $diaSemana,
+                        'data_inicio' => now()->format('Y-m-d'),
+                        'horario_inicio' => '08:00',
+                        'horario_fim' => '18:00',
+                        'dias_semana' => [$diaSemana],
                         'ativo' => true
                     ]);
 

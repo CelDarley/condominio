@@ -12,7 +12,7 @@ class Usuario extends Authenticatable
 
     protected $table = 'usuario';
     protected $primaryKey = 'id';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'nome',
@@ -21,8 +21,6 @@ class Usuario extends Authenticatable
         'tipo',
         'telefone',
         'ativo',
-        'data_criacao',
-        'data_atualizacao'
     ];
 
     protected $hidden = [
@@ -31,8 +29,6 @@ class Usuario extends Authenticatable
 
     protected $casts = [
         'ativo' => 'boolean',
-        'data_criacao' => 'datetime',
-        'data_atualizacao' => 'datetime',
     ];
 
     // Sobrescrever o método de autenticação para usar senha_hash
@@ -87,9 +83,15 @@ class Usuario extends Authenticatable
     {
         if ($this->isMorador() && $this->dadosMorador) {
             $dados = $this->dadosMorador;
-            return "{$dados->endereco}, Apt {$dados->apartamento}" . 
+            return "{$dados->endereco}, Apt {$dados->apartamento}" .
                    ($dados->bloco ? ", Bloco {$dados->bloco}" : '');
         }
         return null;
+    }
+
+    // Scopes
+    public function scopeAtivos($query)
+    {
+        return $query->where('ativo', true);
     }
 }

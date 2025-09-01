@@ -20,6 +20,7 @@ class Escala extends Model
         'horario_inicio',
         'horario_fim',
         'dias_semana',
+        'cartao_programa_id',
         'ativo',
         'observacoes'
     ];
@@ -56,18 +57,24 @@ class Escala extends Model
     }
 
     // Métodos auxiliares
-    public function getDiaSemanaNome()
+    public function getDiasSemanaNomes()
     {
         $dias = [
             0 => 'Segunda-feira',
-            1 => 'Terça-feira', 
+            1 => 'Terça-feira',
             2 => 'Quarta-feira',
             3 => 'Quinta-feira',
             4 => 'Sexta-feira',
             5 => 'Sábado',
             6 => 'Domingo'
         ];
-        
-        return $dias[$this->dia_semana] ?? 'Indefinido';
+
+        if (is_array($this->dias_semana)) {
+            return collect($this->dias_semana)->map(function($dia) use ($dias) {
+                return $dias[$dia] ?? 'Indefinido';
+            })->implode(', ');
+        }
+
+        return 'Indefinido';
     }
 }

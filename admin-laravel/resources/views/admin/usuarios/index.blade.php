@@ -46,7 +46,7 @@
                                             {{ $usuario->ativo ? 'Ativo' : 'Inativo' }}
                                         </span>
                                     </td>
-                                    <td>{{ $usuario->data_criacao ? $usuario->data_criacao->format('d/m/Y H:i') : 'N/A' }}</td>
+                                    <td>{{ $usuario->created_at ? $usuario->created_at->format('d/m/Y H:i') : 'N/A' }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('admin.usuarios.show', $usuario) }}" class="btn btn-info btn-sm" title="Visualizar">

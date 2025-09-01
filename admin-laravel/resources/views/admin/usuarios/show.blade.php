@@ -27,7 +27,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -42,7 +42,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -65,13 +65,13 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Data de Criação:</label>
                             <p class="form-control-plaintext">
-                                {{ $usuario->data_criacao ? $usuario->data_criacao->format('d/m/Y H:i:s') : 'Não disponível' }}
+                                {{ $usuario->created_at ? $usuario->created_at->format('d/m/Y H:i:s') : 'Não disponível' }}
                             </p>
                         </div>
                     </div>
@@ -84,7 +84,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 @if($usuario->tipo == 'vigilante')
                 <div class="row">
                     <div class="col-12">
@@ -99,9 +99,9 @@
                     </div>
                 </div>
                 @endif
-                
+
                 <hr>
-                
+
                 <div class="d-flex justify-content-between">
                     <a href="{{ route('admin.usuarios.index') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Voltar para Lista
@@ -112,10 +112,10 @@
                         </a>
                         <form method="POST" action="{{ route('admin.usuarios.toggle-status', $usuario) }}" style="display: inline;">
                             @csrf
-                            <button type="submit" 
+                            <button type="submit"
                                     class="btn btn-{{ $usuario->ativo ? 'secondary' : 'success' }}"
                                     onclick="return confirm('Tem certeza que deseja {{ $usuario->ativo ? 'desativar' : 'ativar' }} este usuário?')">
-                                <i class="fas fa-{{ $usuario->ativo ? 'ban' : 'check' }}"></i> 
+                                <i class="fas fa-{{ $usuario->ativo ? 'ban' : 'check' }}"></i>
                                 {{ $usuario->ativo ? 'Desativar' : 'Ativar' }}
                             </button>
                         </form>
@@ -135,4 +135,4 @@
     padding: 0.5rem 0.75rem;
 }
 </style>
-@endsection 
+@endsection

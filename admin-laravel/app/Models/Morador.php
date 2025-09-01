@@ -65,4 +65,10 @@ class Morador extends Authenticatable
             'ativo' => $this->ativo
         ];
     }
+
+    // Scopes
+    public function scopeAtivos($query)
+    {
+        return $query->where('ativo', true);
+    }
 }

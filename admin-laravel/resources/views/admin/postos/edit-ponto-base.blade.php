@@ -33,6 +33,7 @@
                 <form method="POST" action="{{ route('admin.postos.pontos-base.update', ['posto' => $posto, 'ponto' => $ponto]) }}" id="form-edit-ponto-base">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="posto_trabalho_id" value="{{ $posto->id }}">
                     
                     @if ($errors->any())
                         <div class="alert alert-danger">
