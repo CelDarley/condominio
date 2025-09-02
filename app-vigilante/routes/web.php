@@ -6,6 +6,7 @@ use App\Http\Controllers\PostoController;
 use App\Http\Controllers\PresencaController;
 use App\Http\Controllers\AvisoController;
 use App\Http\Controllers\OcorrenciaController;
+use App\Http\Controllers\CameraController;
 use Illuminate\Support\Facades\Route;
 
 // Redirecionar raiz para dashboard ou login
@@ -80,6 +81,15 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         Route::put('/{ocorrencia}', [OcorrenciaController::class, 'update'])->name('ocorrencias.update');
         Route::delete('/{ocorrencia}/anexo', [OcorrenciaController::class, 'removeAnexo'])->name('ocorrencias.remove-anexo');
         Route::get('/{ocorrencia}/anexo/{indice}', [OcorrenciaController::class, 'downloadAnexo'])->name('ocorrencias.download-anexo');
+    });
+    
+    // Câmeras Compartilhadas
+    Route::group(['prefix' => 'cameras'], function () {
+        Route::get('/', [CameraController::class, 'index'])->name('cameras.index');
+        Route::get('/morador', [CameraController::class, 'camerasDoMorador'])->name('cameras.morador');
+        Route::get('/visualizar/{id}', [CameraController::class, 'visualizar'])->name('cameras.visualizar');
+        Route::get('/buscar', [CameraController::class, 'buscar'])->name('cameras.buscar');
+        Route::get('/estatisticas', [CameraController::class, 'estatisticas'])->name('cameras.estatisticas');
     });
     
 });

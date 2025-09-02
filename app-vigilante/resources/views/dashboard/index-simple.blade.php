@@ -164,35 +164,65 @@
         </div>
         @endif
 
-        <!-- Feed da Comunidade -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
+            <!-- Feed da Comunidade -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>
+                        Feed da Comunidade
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-success mb-3"></i>
+                    <p class="text-muted mb-3">
+                        Conecte-se com outros moradores! Compartilhe fotos, vídeos, áudios e participe das conversas da comunidade.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="http://localhost:8002/feed" class="btn btn-success">
                             <i class="fas fa-comments me-2"></i>
-                            Feed da Comunidade
-                        </h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <i class="fas fa-users fa-3x text-success mb-3"></i>
-                        <p class="text-muted mb-3">
-                            Conecte-se com outros moradores! Compartilhe fotos, vídeos, áudios e participe das conversas da comunidade.
-                        </p>
-                        <div class="d-grid gap-2">
-                            <a href="http://localhost:8002/feed" class="btn btn-success">
-                                <i class="fas fa-comments me-2"></i>
-                                Acessar Feed
-                            </a>
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Compartilhe momentos e se conecte com vizinhos
-                            </small>
-                        </div>
+                            Acessar Feed
+                        </a>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Compartilhe momentos e se conecte com vizinhos
+                        </small>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Câmeras Compartilhadas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-video me-2"></i>
+                        Ver Câmeras Compartilhadas
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <i class="fas fa-camera fa-3x text-info mb-3"></i>
+                    <p class="text-muted mb-3">
+                        Visualize as câmeras compartilhadas pelos moradores para monitoramento de segurança.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('cameras.index') }}" class="btn btn-info">
+                            <i class="fas fa-video me-2"></i>
+                            Ver Câmeras
+                        </a>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Monitoramento compartilhado pela comunidade
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <!-- Quick Actions -->
         <div class="row">
