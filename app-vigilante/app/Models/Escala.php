@@ -14,6 +14,7 @@ class Escala extends Model
         'nome',
         'descricao',
         'posto_trabalho_id',
+        'cartao_programa_id',
         'usuario_id',
         'data_inicio',
         'data_fim',
@@ -42,6 +43,11 @@ class Escala extends Model
     public function postoTrabalho()
     {
         return $this->belongsTo(PostoTrabalho::class, 'posto_trabalho_id');
+    }
+
+    public function cartaoPrograma()
+    {
+        return $this->belongsTo(CartaoPrograma::class, 'cartao_programa_id');
     }
 
 

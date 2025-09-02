@@ -211,8 +211,19 @@ class CartaoProgramaController extends Controller
         $cartaoPrograma->calcularTempoTotal();
         \Log::info('Tempo total recalculado');
 
+        // Calcular estatísticas dos ciclos
+        $estatisticasCiclos = $cartaoPrograma->calcularQuantidadeCiclos();
+        
+        $mensagem = 'Ponto base adicionado ao cartão programa com sucesso!';
+        if ($estatisticasCiclos['ciclos_completos'] > 0) {
+            $mensagem .= " O cartão terá {$estatisticasCiclos['ciclos_completos']} ciclo(s) completo(s) durante o turno.";
+            if ($estatisticasCiclos['tempo_restante'] > 0) {
+                $mensagem .= " Restam {$estatisticasCiclos['tempo_restante']} minutos para um ciclo parcial.";
+            }
+        }
+
         return redirect()->route('admin.cartoes-programa.show', $cartaoPrograma)
-            ->with('success', 'Ponto base adicionado ao cartão programa com sucesso!');
+            ->with('success', $mensagem);
     }
 
     /**

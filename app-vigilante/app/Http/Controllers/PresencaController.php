@@ -4,162 +4,246 @@ namespace App\Http\Controllers;
 
 use App\Models\RegistroPresenca;
 use App\Models\PontoBase;
+use App\Models\Escala;
+use App\Models\CartaoProgramaPonto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PresencaController extends Controller
 {
-    // Middleware aplicado diretamente nas rotas
-
-    public function registrar(Request $request, $pontoId)
+    // Registrar chegada em um ponto
+    public function registrarChegada(Request $request, $pontoId)
     {
         try {
             $user = Auth::user();
+            $hoje = today();
             $agora = now();
-            $hoje = $agora->startOfDay();
 
             // Verificar se o ponto existe
             $ponto = PontoBase::findOrFail($pontoId);
 
-            // Verificar se já existe um registro de chegada para hoje
-            $registro = RegistroPresenca::where('usuario_id', $user->id)
-                ->where('ponto_id', $pontoId)
-                ->where('timestamp_chegada', '>=', $hoje)
+            // Buscar escala ativa do usuário para hoje
+            $escala = Escala::where('usuario_id', $user->id)
+                ->whereJsonContains('dias_semana', $hoje->dayOfWeek == 0 ? 6 : $hoje->dayOfWeek - 1)
+                ->where('ativo', true)
                 ->first();
 
-            if (!$registro) {
-                // Novo registro de chegada
-                $novoRegistro = RegistroPresenca::create([
-                    'usuario_id' => $user->id,
-                    'ponto_id' => $pontoId,
-                    'timestamp_chegada' => $agora,
-                    'data_criacao' => $agora
-                ]);
-
+            if (!$escala) {
                 return response()->json([
-                    'status' => 'chegada',
-                    'message' => 'Presença registrada com sucesso!',
-                    'timestamp_chegada' => $novoRegistro->getDataChegadaFormatada(),
-                    'ponto_nome' => $ponto->nome
-                ]);
-            } else {
-                if ($registro->timestamp_saida) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Você já registrou chegada e saída neste ponto hoje.'
-                    ], 400);
-                }
-
-                // Registrar saída
-                $registro->update([
-                    'timestamp_saida' => $agora
-                ]);
-
-                return response()->json([
-                    'status' => 'saida',
-                    'message' => 'Saída registrada com sucesso!',
-                    'timestamp_chegada' => $registro->getDataChegadaFormatada(),
-                    'timestamp_saida' => $registro->getDataSaidaFormatada(),
-                    'tempo_permanencia' => $registro->getTempoPermanenciaFormatado(),
-                    'ponto_nome' => $ponto->nome
-                ]);
+                    'status' => 'error',
+                    'message' => 'Você não possui escala ativa para hoje.'
+                ], 400);
             }
+
+            // Verificar se já está presente no ponto
+            if (RegistroPresenca::estaPresenteNoPonto($user->id, $pontoId, $hoje)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Você já registrou chegada neste ponto. Registre a saída primeiro.'
+                ], 400);
+            }
+
+            // Buscar cartão programa ponto (se existir)
+            $cartaoProgramaPonto = null;
+            if ($escala->cartao_programa_id) {
+                $cartaoProgramaPonto = CartaoProgramaPonto::where('cartao_programa_id', $escala->cartao_programa_id)
+                    ->where('ponto_base_id', $pontoId)
+                    ->first();
+            }
+
+            // Capturar localização se fornecida
+            $latitude = $request->input('latitude');
+            $longitude = $request->input('longitude');
+
+            // Criar registro de chegada
+            $registro = RegistroPresenca::create([
+                'usuario_id' => $user->id,
+                'escala_id' => $escala->id,
+                'ponto_base_id' => $pontoId,
+                'cartao_programa_ponto_id' => $cartaoProgramaPonto ? $cartaoProgramaPonto->id : null,
+                'data' => $hoje,
+                'tipo' => 'chegada',
+                'data_hora_registro' => $agora,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'observacoes' => $request->input('observacoes'),
+                'status' => 'normal'
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Chegada registrada com sucesso!',
+                'registro' => [
+                    'id' => $registro->id,
+                    'ponto_nome' => $ponto->nome,
+                    'data_hora' => $registro->getDataHoraFormatada(),
+                    'tipo' => 'chegada'
+                ]
+            ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Erro ao registrar presença: ' . $e->getMessage()
+                'message' => 'Erro ao registrar chegada: ' . $e->getMessage()
             ], 500);
         }
     }
 
+    // Registrar saída de um ponto
+    public function registrarSaida(Request $request, $pontoId)
+    {
+        try {
+            $user = Auth::user();
+            $hoje = today();
+            $agora = now();
+
+            // Verificar se o ponto existe
+            $ponto = PontoBase::findOrFail($pontoId);
+
+            // Verificar se está presente no ponto
+            if (!RegistroPresenca::estaPresenteNoPonto($user->id, $pontoId, $hoje)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Você não está presente neste ponto. Registre a chegada primeiro.'
+                ], 400);
+            }
+
+            // Buscar escala ativa do usuário para hoje
+            $escala = Escala::where('usuario_id', $user->id)
+                ->whereJsonContains('dias_semana', $hoje->dayOfWeek == 0 ? 6 : $hoje->dayOfWeek - 1)
+                ->where('ativo', true)
+                ->first();
+
+            // Buscar cartão programa ponto (se existir)
+            $cartaoProgramaPonto = null;
+            if ($escala && $escala->cartao_programa_id) {
+                $cartaoProgramaPonto = CartaoProgramaPonto::where('cartao_programa_id', $escala->cartao_programa_id)
+                    ->where('ponto_base_id', $pontoId)
+                    ->first();
+            }
+
+            // Capturar localização se fornecida
+            $latitude = $request->input('latitude');
+            $longitude = $request->input('longitude');
+
+            // Criar registro de saída
+            $registro = RegistroPresenca::create([
+                'usuario_id' => $user->id,
+                'escala_id' => $escala ? $escala->id : null,
+                'ponto_base_id' => $pontoId,
+                'cartao_programa_ponto_id' => $cartaoProgramaPonto ? $cartaoProgramaPonto->id : null,
+                'data' => $hoje,
+                'tipo' => 'saida',
+                'data_hora_registro' => $agora,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'observacoes' => $request->input('observacoes'),
+                'status' => 'normal'
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Saída registrada com sucesso!',
+                'registro' => [
+                    'id' => $registro->id,
+                    'ponto_nome' => $ponto->nome,
+                    'data_hora' => $registro->getDataHoraFormatada(),
+                    'tipo' => 'saida'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erro ao registrar saída: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Ver histórico de registros
     public function historico(Request $request)
     {
         $user = Auth::user();
         
         // Filtros
-        $dataInicio = $request->input('data_inicio', now()->startOfMonth()->toDateString());
-        $dataFim = $request->input('data_fim', now()->toDateString());
-        $pontoId = $request->input('ponto_id');
-
-        $query = RegistroPresenca::where('usuario_id', $user->id)
-            ->whereBetween('timestamp_chegada', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59'])
-            ->with(['pontoBase', 'pontoBase.postoTrabalho'])
-            ->orderBy('timestamp_chegada', 'desc');
-
-        if ($pontoId) {
-            $query->where('ponto_id', $pontoId);
-        }
-
-        $registros = $query->paginate(20);
-
-        // Estatísticas
-        $totalRegistros = $query->count();
-        $registrosConcluidos = $query->whereNotNull('timestamp_saida')->count();
-        $registrosAtivos = $totalRegistros - $registrosConcluidos;
-
-        return view('presenca.historico', compact(
-            'registros',
-            'totalRegistros',
-            'registrosConcluidos',
-            'registrosAtivos',
-            'dataInicio',
-            'dataFim',
-            'pontoId'
-        ));
-    }
-
-    public function relatorio(Request $request)
-    {
-        $user = Auth::user();
-        
-        // Relatório dos últimos 30 dias
-        $dataInicio = now()->subDays(30)->startOfDay();
-        $dataFim = now()->endOfDay();
+        $dataInicio = $request->input('data_inicio', today()->toDateString());
+        $dataFim = $request->input('data_fim', today()->toDateString());
 
         $registros = RegistroPresenca::where('usuario_id', $user->id)
-            ->whereBetween('timestamp_chegada', [$dataInicio, $dataFim])
-            ->with(['pontoBase', 'pontoBase.postoTrabalho'])
-            ->orderBy('timestamp_chegada', 'desc')
+            ->whereBetween('data', [$dataInicio, $dataFim])
+            ->with(['pontoBase', 'escala'])
+            ->orderBy('data_hora_registro', 'desc')
             ->get();
 
-        // Agrupar por posto
-        $registrosPorPosto = $registros->groupBy(function ($registro) {
-            return $registro->pontoBase->postoTrabalho->nome ?? 'Posto não identificado';
-        });
-
-        // Estatísticas gerais
-        $estatisticas = [
-            'total_registros' => $registros->count(),
-            'registros_concluidos' => $registros->where('timestamp_saida', '!=', null)->count(),
-            'tempo_total_minutos' => $registros->sum(function ($registro) {
-                return $registro->getTempoPermanencia();
-            }),
-            'postos_visitados' => $registrosPorPosto->count(),
-            'pontos_visitados' => $registros->unique('ponto_id')->count()
-        ];
-
-        $estatisticas['tempo_total_formatado'] = $this->formatarTempo($estatisticas['tempo_total_minutos']);
-        $estatisticas['tempo_medio_formatado'] = $estatisticas['total_registros'] > 0 
-            ? $this->formatarTempo($estatisticas['tempo_total_minutos'] / $estatisticas['total_registros'])
-            : '0m';
-
-        return view('presenca.relatorio', compact(
-            'registrosPorPosto',
-            'estatisticas',
-            'dataInicio',
-            'dataFim'
-        ));
+        return view('presenca.historico', compact('registros', 'dataInicio', 'dataFim'));
     }
 
-    private function formatarTempo($minutos)
+    // Status atual dos pontos para hoje
+    public function statusHoje()
     {
-        if ($minutos >= 60) {
-            $horas = intval($minutos / 60);
-            $minutosRestantes = $minutos % 60;
-            return sprintf('%dh %02dm', $horas, $minutosRestantes);
+        try {
+            $user = Auth::user();
+            $hoje = today();
+            $diaSemana = $hoje->dayOfWeek == 0 ? 6 : $hoje->dayOfWeek - 1;
+
+            // Buscar escala ativa do usuário para hoje
+            $escala = Escala::where('usuario_id', $user->id)
+                ->whereJsonContains('dias_semana', $diaSemana)
+                ->where('ativo', true)
+                ->first();
+
+            if (!$escala) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Nenhuma escala ativa encontrada para hoje.'
+                ], 404);
+            }
+
+            $pontos = [];
+            
+            // Buscar pontos do cartão programa se existir
+            if ($escala->cartao_programa_id) {
+                $cartaoPontos = CartaoProgramaPonto::where('cartao_programa_id', $escala->cartao_programa_id)
+                    ->with('pontoBase')
+                    ->orderBy('ordem')
+                    ->get();
+                
+                foreach ($cartaoPontos as $cartaoPonto) {
+                    $ultimoRegistro = RegistroPresenca::ultimaPresencaPonto(
+                        $user->id, 
+                        $cartaoPonto->ponto_base_id, 
+                        $hoje
+                    );
+
+                    $pontos[] = [
+                        'id' => $cartaoPonto->pontoBase->id,
+                        'nome' => $cartaoPonto->pontoBase->nome,
+                        'ordem' => $cartaoPonto->ordem,
+                        'tempo_permanencia' => $cartaoPonto->tempo_permanencia,
+                        'presente' => $ultimoRegistro && $ultimoRegistro->tipo === 'chegada',
+                        'ultimo_registro' => $ultimoRegistro ? [
+                            'tipo' => $ultimoRegistro->tipo,
+                            'data_hora' => $ultimoRegistro->getDataHoraFormatada()
+                        ] : null
+                    ];
+                }
+            }
+
+            return response()->json([
+                'escala' => [
+                    'id' => $escala->id,
+                    'nome' => $escala->nome,
+                    'posto' => $escala->postoTrabalho ? $escala->postoTrabalho->nome : 'N/A'
+                ],
+                'pontos' => $pontos
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erro interno: ' . $e->getMessage()
+            ], 500);
         }
-        
-        return sprintf('%dm', $minutos);
     }
 } 

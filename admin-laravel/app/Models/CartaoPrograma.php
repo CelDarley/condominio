@@ -211,4 +211,105 @@ class CartaoPrograma extends Model
         
         return $descricao;
     }
+
+    /**
+     * Calcula o itinerário completo com ciclos de repetição da sequência
+     * durante toda a duração do turno
+     */
+    public function calcularItinerarioCompleto(): array
+    {
+        if (!$this->horario_inicio || !$this->horario_fim) {
+            return [];
+        }
+
+        $pontos = $this->cartaoProgramaPontos()->orderBy('ordem')->get();
+        if ($pontos->isEmpty()) {
+            return [];
+        }
+
+        $duracaoTurnoMinutos = $this->getDuracaoTurno();
+        $tempoTotalSequencia = $this->tempo_total_estimado;
+        
+        if ($tempoTotalSequencia <= 0) {
+            return [];
+        }
+
+        $itinerario = [];
+        $horaAtual = clone $this->horario_inicio;
+        $tempoDecorrido = 0;
+
+        while ($tempoDecorrido < $duracaoTurnoMinutos) {
+            // Percorrer cada ponto da sequência
+            foreach ($pontos as $indice => $ponto) {
+                // Verificar se ainda há tempo no turno
+                if ($tempoDecorrido >= $duracaoTurnoMinutos) {
+                    break 2; // Sair dos dois loops
+                }
+
+                // Horário de chegada no ponto
+                $horarioChegada = clone $horaAtual;
+                
+                // Tempo de permanência no ponto
+                $tempoPermanencia = $ponto->tempo_permanencia;
+                $horaAtual->addMinutes($tempoPermanencia);
+                $tempoDecorrido += $tempoPermanencia;
+
+                // Horário de saída do ponto
+                $horarioSaida = clone $horaAtual;
+
+                // Adicionar ao itinerário
+                $itinerario[] = [
+                    'ponto_base_id' => $ponto->ponto_base_id,
+                    'ponto_nome' => $ponto->pontoBase->nome ?? 'Ponto ' . $ponto->ordem,
+                    'ordem_sequencia' => $ponto->ordem,
+                    'horario_chegada' => $horarioChegada->format('H:i'),
+                    'horario_saida' => $horarioSaida->format('H:i'),
+                    'tempo_permanencia' => $tempoPermanencia,
+                    'tempo_deslocamento' => $ponto->tempo_deslocamento,
+                    'instrucoes' => $ponto->instrucoes_especificas,
+                    'obrigatorio' => $ponto->obrigatorio,
+                    'ciclo' => floor($tempoDecorrido / $tempoTotalSequencia) + 1
+                ];
+
+                // Verificar se ainda há tempo no turno após a permanência
+                if ($tempoDecorrido >= $duracaoTurnoMinutos) {
+                    break 2; // Sair dos dois loops
+                }
+
+                // Tempo de deslocamento para o próximo ponto (ou volta ao primeiro)
+                $tempoDeslocamento = $ponto->tempo_deslocamento;
+                $horaAtual->addMinutes($tempoDeslocamento);
+                $tempoDecorrido += $tempoDeslocamento;
+            }
+        }
+
+        return $itinerario;
+    }
+
+    /**
+     * Calcula quantos ciclos completos da sequência cabem no turno
+     */
+    public function calcularQuantidadeCiclos(): array
+    {
+        $duracaoTurno = $this->getDuracaoTurno();
+        $tempoSequencia = $this->tempo_total_estimado;
+        
+        if ($tempoSequencia <= 0) {
+            return [
+                'ciclos_completos' => 0,
+                'tempo_restante' => $duracaoTurno,
+                'percentual_ciclo_parcial' => 0
+            ];
+        }
+
+        $ciclosCompletos = floor($duracaoTurno / $tempoSequencia);
+        $tempoRestante = $duracaoTurno % $tempoSequencia;
+        $percentualCicloParcial = $tempoSequencia > 0 ? ($tempoRestante / $tempoSequencia) * 100 : 0;
+
+        return [
+            'ciclos_completos' => $ciclosCompletos,
+            'tempo_restante' => $tempoRestante,
+            'percentual_ciclo_parcial' => round($percentualCicloParcial, 1)
+        ];
+    }
 }

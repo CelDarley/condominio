@@ -91,10 +91,14 @@
                     @endif
 
                     <div class="d-grid">
-                        <a href="{{ route('posto.show', $posto->id) }}" class="btn btn-primary">
-                            <i class="fas fa-eye me-2"></i>
-                            Ver Posto de Trabalho
+                        <a href="{{ route('posto.show', $posto->id) }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play me-2"></i>
+                            Iniciar Trabalho
                         </a>
+                        <small class="text-muted text-center mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Clique para ver pontos de controle e registrar presença
+                        </small>
                     </div>
                 </div>
             @endforeach

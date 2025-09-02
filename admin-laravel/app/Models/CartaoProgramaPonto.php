@@ -16,6 +16,8 @@ class CartaoProgramaPonto extends Model
         'cartao_programa_id',
         'ponto_base_id',
         'ordem',
+        'horario_inicio',
+        'horario_fim',
         'tempo_permanencia',
         'tempo_deslocamento',
         'instrucoes_especificas',
@@ -23,7 +25,9 @@ class CartaoProgramaPonto extends Model
     ];
 
     protected $casts = [
-        'obrigatorio' => 'boolean'
+        'obrigatorio' => 'boolean',
+        'horario_inicio' => 'datetime:H:i',
+        'horario_fim' => 'datetime:H:i'
     ];
 
     // Relacionamentos

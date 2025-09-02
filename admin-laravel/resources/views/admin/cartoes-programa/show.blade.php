@@ -324,6 +324,122 @@
             </div>
         </div>
         @endif
+
+        <!-- Itinerário Completo com Ciclos -->
+        @if($cartaoPrograma->cartaoProgramaPontos->count() > 0 && $cartaoPrograma->horario_inicio && $cartaoPrograma->horario_fim)
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-clock"></i> Itinerário Completo do Turno
+                </h6>
+            </div>
+            <div class="card-body">
+                @php
+                    $estatisticasCiclos = $cartaoPrograma->calcularQuantidadeCiclos();
+                    $itinerarioCompleto = $cartaoPrograma->calcularItinerarioCompleto();
+                @endphp
+                
+                <!-- Estatísticas dos Ciclos -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-left-success">
+                            <div class="card-body py-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Ciclos Completos</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $estatisticasCiclos['ciclos_completos'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-left-info">
+                            <div class="card-body py-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tempo por Ciclo</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $cartaoPrograma->getTempoTotalFormatado() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-left-warning">
+                            <div class="card-body py-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Tempo Restante</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    @if($estatisticasCiclos['tempo_restante'] > 0)
+                                        {{ floor($estatisticasCiclos['tempo_restante'] / 60) }}h {{ $estatisticasCiclos['tempo_restante'] % 60 }}min
+                                    @else
+                                        Exato
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-left-primary">
+                            <div class="card-body py-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Eficiência</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ round((($estatisticasCiclos['ciclos_completos'] * $cartaoPrograma->tempo_total_estimado) / $cartaoPrograma->getDuracaoTurno()) * 100, 1) }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Itinerário Detalhado -->
+                @if(count($itinerarioCompleto) > 0)
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ciclo</th>
+                                <th>Ponto Base</th>
+                                <th>Chegada</th>
+                                <th>Saída</th>
+                                <th>Permanência</th>
+                                <th>Deslocamento</th>
+                                <th>Instruções</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($itinerarioCompleto as $item)
+                            <tr class="{{ $item['obrigatorio'] ? '' : 'table-warning' }}">
+                                <td>
+                                    <span class="badge badge-primary">{{ $item['ciclo'] }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ $item['ponto_nome'] }}</strong>
+                                    @if(!$item['obrigatorio'])
+                                        <small class="text-muted">(Opcional)</small>
+                                    @endif
+                                </td>
+                                <td>{{ $item['horario_chegada'] }}</td>
+                                <td>{{ $item['horario_saida'] }}</td>
+                                <td>{{ $item['tempo_permanencia'] }}min</td>
+                                <td>{{ $item['tempo_deslocamento'] }}min</td>
+                                <td>
+                                    @if($item['instrucoes'])
+                                        <small>{{ Str::limit($item['instrucoes'], 50) }}</small>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Informações:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>A sequência se repete automaticamente até o fim do turno</li>
+                        <li>Linhas amarelas indicam pontos opcionais</li>
+                        <li>O tempo de deslocamento do último ponto volta para o primeiro</li>
+                    </ul>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 

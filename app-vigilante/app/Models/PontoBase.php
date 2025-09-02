@@ -11,7 +11,7 @@ class PontoBase extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'posto_id',
+        'posto_trabalho_id',
         'nome',
         'endereco',
         'descricao',
@@ -32,7 +32,7 @@ class PontoBase extends Model
     // Relacionamentos
     public function postoTrabalho()
     {
-        return $this->belongsTo(PostoTrabalho::class, 'posto_id');
+        return $this->belongsTo(PostoTrabalho::class, 'posto_trabalho_id');
     }
 
     public function registrosPresenca()

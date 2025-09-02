@@ -17,10 +17,19 @@ Route::get('/test', function () {
     return '<h1>Teste Simples</h1><p>Se você vê isso, o Laravel está funcionando!</p>';
 })->name('test');
 
-// Rotas de autenticação
+// Rota de teste POST
+Route::post('/test-post', function () {
+    return response()->json(['status' => 'POST funcionando', 'data' => request()->all()]);
+})->name('test-post');
+
+// Rota de login direta (sem prefixo)
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+
+// Rotas de autenticação com prefixo (mantendo compatibilidade)
 Route::group(['prefix' => 'auth'], function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
+    Route::post('/login', [AuthController::class, 'login'])->name('auth.login.post');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
@@ -39,9 +48,10 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
     
     // Registro de Presença
     Route::group(['prefix' => 'presenca'], function () {
-        Route::post('/registrar/{ponto}', [PresencaController::class, 'registrar'])->name('presenca.registrar');
+        Route::post('/chegada/{ponto}', [PresencaController::class, 'registrarChegada'])->name('presenca.chegada');
+        Route::post('/saida/{ponto}', [PresencaController::class, 'registrarSaida'])->name('presenca.saida');
+        Route::get('/status-hoje', [PresencaController::class, 'statusHoje'])->name('presenca.status-hoje');
         Route::get('/historico', [PresencaController::class, 'historico'])->name('presenca.historico');
-        Route::get('/relatorio', [PresencaController::class, 'relatorio'])->name('presenca.relatorio');
     });
     
     // Avisos

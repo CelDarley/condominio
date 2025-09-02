@@ -14,6 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.vigilante' => \App\Http\Middleware\AuthVigilante::class,
         ]);
+        
+        // Garantir que o middleware web está aplicado (com CSRF customizado)
+        $middleware->web([
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \App\Http\Middleware\VerifyCsrfToken::class, // CSRF customizado que exclui login
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -15,7 +15,8 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
         
-        return view('auth.login');
+        // Temporariamente usando versão simplificada para contornar erro JavaScript
+        return view('auth.login-simple');
     }
 
     public function login(Request $request)

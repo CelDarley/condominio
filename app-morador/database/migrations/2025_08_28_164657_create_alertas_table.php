@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('tipo', ['seguranca', 'manutencao', 'geral', 'emergencia']);
             $table->enum('prioridade', ['baixa', 'media', 'alta', 'critica']);
             $table->enum('status', ['ativo', 'resolvido', 'cancelado']);
-            $table->unsignedInteger('usuario_id')->nullable(); // ID do vigilante que criou
+            $table->unsignedBigInteger('usuario_id')->nullable(); // ID do vigilante que criou
             $table->string('localizacao')->nullable();
             $table->json('coordenadas')->nullable(); // latitude e longitude
             $table->timestamp('resolvido_em')->nullable();

@@ -44,7 +44,8 @@ class DashboardController extends Controller
 
         if ($escala) {
             $postos = collect([$escala->postoTrabalho]);
-            $cartaoPrograma = null; // CartaoPrograma não está mais disponível na nova estrutura
+            // Buscar cartão programa pela escala
+            $cartaoPrograma = $escala->cartaoPrograma ?? null;
         }
 
         // Gerar array de 7 dias centrado na data atual
@@ -65,14 +66,14 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('dashboard.index-simple', compact(
-            'user', 
-            'escala', 
-            'postos', 
-            'cartaoPrograma', 
-            'diasCarrossel',
-            'dataBase'
-        ));
+        return view('dashboard.index-simple', [
+            'user' => $user,
+            'escalaDiaria' => $escala,
+            'postos' => $postos,
+            'cartaoPrograma' => $cartaoPrograma,
+            'diasCarrossel' => $diasCarrossel,
+            'dataBase' => $dataBase
+        ]);
     }
 
     public function postosPorData(Request $request, $data)
@@ -84,7 +85,7 @@ class DashboardController extends Controller
 
         if ($escala) {
             $posto = $escala->postoTrabalho;
-            $cartaoPrograma = null; // CartaoPrograma não está mais disponível
+            $cartaoPrograma = $escala->cartaoPrograma;
             
             $result = [
                 'posto' => $posto ? [

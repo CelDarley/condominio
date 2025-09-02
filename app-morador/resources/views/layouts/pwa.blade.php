@@ -299,14 +299,14 @@
     
     @yield('styles')
 </head>
-<body>
+<body @if(isset($bodyClass)) class="{{ $bodyClass }}" @endif @if(isset($bodyStyle)) style="{{ $bodyStyle }}" @endif>
     <!-- Loading Spinner -->
     <div id="loading" class="loading d-none">
         <div class="spinner"></div>
     </div>
 
     <!-- Main Content -->
-    <div class="pwa-container @yield('container-class')">
+    <div class="pwa-container @yield('container-class')" @if(isset($containerStyle)) style="{{ $containerStyle }}" @endif>
         <!-- Alerts -->
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">

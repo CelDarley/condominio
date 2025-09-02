@@ -2,6 +2,64 @@
 
 @section('title', 'Dashboard')
 
+@section('styles')
+<style>
+    /* Estilos para o marcador de vigilante */
+    .vigilante-marker {
+        background: none;
+        border: none;
+    }
+    
+    .vigilante-icon {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: 3px solid white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        }
+    }
+    
+    .vigilante-popup {
+        min-width: 200px;
+    }
+    
+    .vigilante-popup h6 {
+        margin-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    
+    .vigilante-popup p {
+        margin-bottom: 5px;
+        font-size: 13px;
+    }
+    
+    /* Estilo do mapa */
+    #map {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="row">
     <div class="col-lg-8">
@@ -264,33 +322,93 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    // Inicializar mapa
-    window.vigilantesMap = L.map('map').setView([-23.5505, -46.6333], 15); // Coordenadas de São Paulo
+    // Inicializar mapa com a localização de teste
+    window.vigilantesMap = L.map('map').setView([-19.9720213, -43.9597552], 16); // Coordenadas de teste
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(window.vigilantesMap);
     
-    // Capturar localização do usuário para o botão de pânico
+    // Adicionar marcador de vigilante de teste
+    const vigilanteTeste = L.marker([-19.9720213, -43.9597552], {
+        icon: L.divIcon({
+            className: 'vigilante-marker',
+            html: '<div class="vigilante-icon"><i class="fas fa-shield-alt"></i></div>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        })
+    }).addTo(window.vigilantesMap);
+    
+    // Função para atualizar o popup do vigilante
+    function atualizarPopupVigilante(marker, lat, lng) {
+        const popup = `
+            <div class="vigilante-popup">
+                <h6><i class="fas fa-shield-alt text-primary"></i> Vigilante de Teste</h6>
+                <p><strong>Status:</strong> <span class="badge badge-success">Online</span></p>
+                <p><strong>Última atualização:</strong> ${new Date().toLocaleTimeString()}</p>
+                <p><strong>Coordenadas:</strong> ${lat.toFixed(7)}, ${lng.toFixed(7)}</p>
+                <p><strong>Escala:</strong> Turno Noturno (18h-06h)</p>
+                <small class="text-muted">Localização em tempo real • Atualizando...</small>
+            </div>
+        `;
+        marker.bindPopup(popup);
+    }
+    
+    // Inicializar popup
+    atualizarPopupVigilante(vigilanteTeste, -19.9720213, -43.9597552);
+    
+    // Adicionar círculo para área de cobertura do ponto base
+    const areaCoberturaVigilante = L.circle([-19.9720213, -43.9597552], {
+        color: '#007bff',
+        fillColor: '#007bff',
+        fillOpacity: 0.1,
+        radius: 50 // 50 metros de raio
+    }).addTo(window.vigilantesMap);
+    
+    areaCoberturaVigilante.bindPopup(`
+        <div class="area-popup">
+            <h6><i class="fas fa-map-marker-alt text-info"></i> Ponto Base: Teste Localização</h6>
+            <p><strong>Área de Cobertura:</strong> 50m de raio</p>
+            <p><strong>Status:</strong> <span class="badge badge-success">Vigilante Presente</span></p>
+            <small class="text-muted">Ponto criado para teste de localização</small>
+        </div>
+    `);
+    
+    // Simular movimento do vigilante (opcional para teste)
+    let currentLat = -19.9720213;
+    let currentLng = -43.9597552;
+    let movimento = 0;
+    
+    setInterval(function() {
+        // Simular pequeno movimento (como se o vigilante estivesse patrulhando)
+        const movimentoLat = (Math.sin(movimento) * 0.0001); // Movimento muito sutil
+        const movimentoLng = (Math.cos(movimento) * 0.0001);
+        
+        currentLat = -19.9720213 + movimentoLat;
+        currentLng = -43.9597552 + movimentoLng;
+        
+        // Atualizar posição do marcador
+        vigilanteTeste.setLatLng([currentLat, currentLng]);
+        
+        // Atualizar popup com nova localização
+        atualizarPopupVigilante(vigilanteTeste, currentLat, currentLng);
+        
+        movimento += 0.1;
+    }, 5000); // Atualizar a cada 5 segundos
+    
+    // Capturar localização do usuário para o botão de pânico (apenas para coordenadas, sem mostrar no mapa)
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
             
-            // Centralizar mapa na posição do usuário
-            window.vigilantesMap.setView([latitude, longitude], 18);
-            
-            // Adicionar marcador do usuário
-            L.marker([latitude, longitude])
-                .addTo(window.vigilantesMap)
-                .bindPopup('<strong>Você está aqui</strong>')
-                .openPopup();
-            
-            // Adicionar campos hidden ao formulário
+            // Adicionar campos hidden ao formulário (mantendo funcionalidade do pânico)
             $('#panicoForm').append(`
                 <input type="hidden" name="latitude" value="${latitude}">
                 <input type="hidden" name="longitude" value="${longitude}">
             `);
+            
+            console.log('Localização do usuário capturada para pânico:', latitude, longitude);
         });
     }
     

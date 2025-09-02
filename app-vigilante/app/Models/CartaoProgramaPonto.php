@@ -14,9 +14,13 @@ class CartaoProgramaPonto extends Model
         'cartao_programa_id',
         'ponto_base_id',
         'ordem',
+        'horario_inicio',
+        'horario_fim',
         'tempo_permanencia',
         'tempo_deslocamento',
+        'tempo_estimado',
         'instrucoes_especificas',
+        'observacoes',
         'obrigatorio',
         'created_at',
         'updated_at'
@@ -24,8 +28,11 @@ class CartaoProgramaPonto extends Model
 
     protected $casts = [
         'ordem' => 'integer',
+        'horario_inicio' => 'datetime:H:i',
+        'horario_fim' => 'datetime:H:i',
         'tempo_permanencia' => 'integer',
         'tempo_deslocamento' => 'integer',
+        'tempo_estimado' => 'integer',
         'obrigatorio' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

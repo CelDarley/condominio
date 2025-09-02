@@ -36,21 +36,21 @@ class PostoController extends Controller
             $cartaoPrograma = $escala->cartaoPrograma;
             
             if ($cartaoPrograma) {
+                // Buscar TODAS as ocorrências dos pontos do cartão programa com horários específicos
                 $pontosBase = CartaoProgramaPonto::where('cartao_programa_id', $cartaoPrograma->id)
                     ->with('pontoBase')
                     ->orderBy('ordem')
-                    ->get()
-                    ->pluck('pontoBase');
+                    ->get();
             }
         } else {
             // Se não há cartão programa, usar pontos base do posto
             $pontosBase = PontoBase::where('posto_trabalho_id', $postoId)
                 ->where('ativo', true)
-                ->orderBy('ordem')
+                ->orderBy('nome')
                 ->get();
         }
 
-        return view('posto.show', compact('posto', 'pontosBase', 'cartaoPrograma', 'escala'));
+        return view('posto.show-simple', compact('posto', 'pontosBase', 'cartaoPrograma', 'escala'));
     }
 
     public function statusPontos($postoId)

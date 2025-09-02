@@ -4,8 +4,37 @@
 
 @section('container-class', 'feed-page')
 
+@php
+$bodyClass = 'feed-page';
+$bodyStyle = 'overflow: hidden !important; height: 100vh !important; margin: 0 !important; padding: 0 !important;';
+$containerStyle = 'height: 100vh !important; max-height: 100vh !important; overflow: hidden !important; padding: 0 !important; margin: 0 !important;';
+@endphp
+
 @section('styles')
 <style>
+    /* Forçar que não haja scroll na página */
+    body.feed-page {
+        overflow: hidden !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+    }
+    
+    .feed-page .pwa-container {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: 100vh !important;
+    }
+    
+    .feed-page .container-fluid {
+        height: 100vh !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
     .feed-container {
         max-width: 600px;
         margin: 0 auto;
@@ -13,10 +42,14 @@
     }
     
     .chat-container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px 15px 150px 15px; /* Padding inferior aumentado para evitar sobreposição com barra de navegação */
-        min-height: calc(100vh - 150px);
+        max-width: 600px !important;
+        margin: 0 auto !important;
+        padding: 10px 15px 10px 15px !important; /* Padding mínimo */
+        height: 100vh !important; /* Altura fixa igual ao viewport */
+        overflow-y: auto !important; /* Scroll interno se necessário */
+        max-height: 100vh !important;
+        box-sizing: border-box !important;
+        position: relative !important;
     }
     
     .post-card {
@@ -299,7 +332,9 @@
     /* Ajuste para dispositivos móveis */
     @media (max-width: 768px) {
         .chat-container {
-            padding-bottom: 180px !important; /* Muito mais espaço em dispositivos móveis */
+            padding-bottom: 60px !important; /* Espaço reduzido em dispositivos móveis */
+            height: calc(100vh - 80px) !important;
+            max-height: calc(100vh - 80px) !important;
         }
         
         .new-post-form {
@@ -320,8 +355,8 @@
     
     /* Espaçamento otimizado sem barra de navegação */
     .chat-container {
-        padding-bottom: 80px !important;
-        margin-bottom: 20px !important;
+        padding-bottom: 50px !important;
+        margin-bottom: 0px !important;
     }
     
     /* Botão de navegação flutuante */
@@ -355,8 +390,8 @@
     /* Espaçamento específico para mobile */
     @media screen and (max-width: 768px) {
         .chat-container {
-            padding-bottom: 120px !important;
-            margin-bottom: 30px !important;
+            padding-bottom: 60px !important;
+            margin-bottom: 0px !important;
         }
         
         .comment-form {
@@ -408,7 +443,7 @@
     </div>
 </div>
 
-<div class="chat-container">
+<div class="chat-container" style="height: 100vh !important; max-height: 100vh !important; overflow-y: auto !important; padding: 10px 15px !important; box-sizing: border-box !important; margin: 0 auto !important; max-width: 600px !important;">
     <!-- Formulário para criar novo post -->
     <div class="new-post-form">
         <form action="{{ route('feed.store') }}" method="POST" enctype="multipart/form-data" id="postForm">

@@ -8,21 +8,29 @@ class RegistroPresenca extends Model
 {
     protected $table = 'registro_presenca';
     protected $primaryKey = 'id';
-    public $timestamps = false;
+    public $timestamps = true; // Usando created_at e updated_at
 
     protected $fillable = [
         'usuario_id',
-        'ponto_id',
-        'timestamp_chegada',
-        'timestamp_saida',
+        'escala_id',
+        'ponto_base_id',
+        'cartao_programa_ponto_id',
+        'data',
+        'tipo',
+        'data_hora_registro',
+        'latitude',
+        'longitude',
         'observacoes',
-        'data_criacao'
+        'status'
     ];
 
     protected $casts = [
-        'timestamp_chegada' => 'datetime',
-        'timestamp_saida' => 'datetime',
-        'data_criacao' => 'datetime',
+        'data' => 'date',
+        'data_hora_registro' => 'datetime',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'tipo' => 'string',
+        'status' => 'string'
     ];
 
     // Relacionamentos
@@ -31,15 +39,25 @@ class RegistroPresenca extends Model
         return $this->belongsTo(Usuario::class, 'usuario_id');
     }
 
+    public function escala()
+    {
+        return $this->belongsTo(Escala::class, 'escala_id');
+    }
+
     public function pontoBase()
     {
-        return $this->belongsTo(PontoBase::class, 'ponto_id');
+        return $this->belongsTo(PontoBase::class, 'ponto_base_id');
+    }
+
+    public function cartaoProgramaPonto()
+    {
+        return $this->belongsTo(CartaoProgramaPonto::class, 'cartao_programa_ponto_id');
     }
 
     // Scopes
     public function scopeHoje($query)
     {
-        return $query->whereDate('timestamp_chegada', now()->toDateString());
+        return $query->whereDate('data', today());
     }
 
     public function scopePorUsuario($query, $usuarioId)
@@ -49,68 +67,65 @@ class RegistroPresenca extends Model
 
     public function scopePorPonto($query, $pontoId)
     {
-        return $query->where('ponto_id', $pontoId);
+        return $query->where('ponto_base_id', $pontoId);
     }
 
-    public function scopeAtivos($query)
+    public function scopePorEscala($query, $escalaId)
     {
-        return $query->whereNull('timestamp_saida');
+        return $query->where('escala_id', $escalaId);
     }
 
-    public function scopeConcluidos($query)
+    public function scopeTipoChegada($query)
     {
-        return $query->whereNotNull('timestamp_saida');
+        return $query->where('tipo', 'chegada');
+    }
+
+    public function scopeTipoSaida($query)
+    {
+        return $query->where('tipo', 'saida');
     }
 
     // Métodos auxiliares
-    public function estaAtivo()
+    public function isChegada()
     {
-        return is_null($this->timestamp_saida);
+        return $this->tipo === 'chegada';
     }
 
-    public function estaConcluido()
+    public function isSaida()
     {
-        return !is_null($this->timestamp_saida);
+        return $this->tipo === 'saida';
     }
 
-    public function getTempoPermanencia()
+    public function getDataHoraFormatada()
     {
-        if ($this->timestamp_saida) {
-            return $this->timestamp_chegada->diffInMinutes($this->timestamp_saida);
-        }
-        
-        return $this->timestamp_chegada->diffInMinutes(now());
+        return $this->data_hora_registro ? $this->data_hora_registro->format('d/m/Y H:i:s') : null;
     }
 
-    public function getTempoPermanenciaFormatado()
+    public function getStatusBadge()
     {
-        $minutos = $this->getTempoPermanencia();
-        
-        if ($minutos >= 60) {
-            $horas = intval($minutos / 60);
-            $minutosRestantes = $minutos % 60;
-            return sprintf('%dh %02dm', $horas, $minutosRestantes);
-        }
-        
-        return sprintf('%dm', $minutos);
+        $badges = [
+            'normal' => 'bg-success',
+            'atraso' => 'bg-warning',
+            'antecipado' => 'bg-info'
+        ];
+
+        return $badges[$this->status] ?? 'bg-secondary';
     }
 
-    public function getStatus()
+    // Método estático para verificar última presença em um ponto
+    public static function ultimaPresencaPonto($usuarioId, $pontoBaseId, $data)
     {
-        if ($this->timestamp_saida) {
-            return 'concluido';
-        }
-        
-        return 'presente';
+        return static::where('usuario_id', $usuarioId)
+            ->where('ponto_base_id', $pontoBaseId)
+            ->where('data', $data)
+            ->orderBy('data_hora_registro', 'desc')
+            ->first();
     }
 
-    public function getDataChegadaFormatada()
+    // Método para verificar se o vigilante está presente no ponto
+    public static function estaPresenteNoPonto($usuarioId, $pontoBaseId, $data)
     {
-        return $this->timestamp_chegada ? $this->timestamp_chegada->format('d/m/Y H:i:s') : null;
-    }
-
-    public function getDataSaidaFormatada()
-    {
-        return $this->timestamp_saida ? $this->timestamp_saida->format('d/m/Y H:i:s') : null;
+        $ultimo = static::ultimaPresencaPonto($usuarioId, $pontoBaseId, $data);
+        return $ultimo && $ultimo->tipo === 'chegada';
     }
 } 

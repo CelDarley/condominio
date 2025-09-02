@@ -50,7 +50,6 @@ class UsuarioController extends Controller
                 'senha_hash' => Hash::make($request->senha),
                 'tipo' => $request->tipo,
                 'ativo' => true,
-                'data_atualizacao' => now()
             ]);
 
             return redirect()->route('admin.usuarios.index')
