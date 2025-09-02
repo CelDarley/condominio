@@ -201,7 +201,16 @@
                     <div class="card-body text-center">
                         <h6 class="card-title">Ações Rápidas</h6>
                         <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary" onclick="alert('Funcionalidade em desenvolvimento')">
+                            <a href="{{ route('ocorrencias.index') }}" class="btn btn-outline-primary position-relative">
+                                <i class="fas fa-file-alt me-2"></i>Registrar Ocorrência
+                                @if($ocorrenciasAbertas > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ $ocorrenciasAbertas }}
+                                        <span class="visually-hidden">ocorrências abertas</span>
+                                    </span>
+                                @endif
+                            </a>
+                            <button class="btn btn-outline-info" onclick="alert('Funcionalidade em desenvolvimento')">
                                 <i class="fas fa-clipboard-list me-2"></i>Ver Relatórios
                             </button>
                             <button class="btn btn-outline-danger" onclick="alert('Botão de pânico acionado!')">

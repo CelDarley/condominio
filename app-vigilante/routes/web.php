@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PostoController;
 use App\Http\Controllers\PresencaController;
 use App\Http\Controllers\AvisoController;
+use App\Http\Controllers\OcorrenciaController;
 use Illuminate\Support\Facades\Route;
 
 // Redirecionar raiz para dashboard ou login
@@ -67,6 +68,18 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         // API para avisos rápidos
         Route::post('/enviar-rapido', [AvisoController::class, 'enviarRapido'])->name('avisos.enviar-rapido');
         Route::post('/panico', [AvisoController::class, 'panico'])->name('avisos.panico');
+    });
+    
+    // Ocorrências
+    Route::group(['prefix' => 'ocorrencias'], function () {
+        Route::get('/', [OcorrenciaController::class, 'index'])->name('ocorrencias.index');
+        Route::get('/criar', [OcorrenciaController::class, 'create'])->name('ocorrencias.create');
+        Route::post('/', [OcorrenciaController::class, 'store'])->name('ocorrencias.store');
+        Route::get('/{ocorrencia}', [OcorrenciaController::class, 'show'])->name('ocorrencias.show');
+        Route::get('/{ocorrencia}/editar', [OcorrenciaController::class, 'edit'])->name('ocorrencias.edit');
+        Route::put('/{ocorrencia}', [OcorrenciaController::class, 'update'])->name('ocorrencias.update');
+        Route::delete('/{ocorrencia}/anexo', [OcorrenciaController::class, 'removeAnexo'])->name('ocorrencias.remove-anexo');
+        Route::get('/{ocorrencia}/anexo/{indice}', [OcorrenciaController::class, 'downloadAnexo'])->name('ocorrencias.download-anexo');
     });
     
 });

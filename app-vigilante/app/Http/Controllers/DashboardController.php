@@ -6,6 +6,7 @@ use App\Models\Escala;
 use App\Models\EscalaDiaria;
 use App\Models\PostoTrabalho;
 use App\Models\CartaoPrograma;
+use App\Models\Ocorrencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -66,13 +67,19 @@ class DashboardController extends Controller
             ];
         }
 
+        // Contar ocorrências abertas do usuário
+        $ocorrenciasAbertas = Ocorrencia::where('usuario_id', $user->id)
+            ->whereIn('status', ['aberta', 'em_andamento'])
+            ->count();
+
         return view('dashboard.index-simple', [
             'user' => $user,
             'escalaDiaria' => $escala,
             'postos' => $postos,
             'cartaoPrograma' => $cartaoPrograma,
             'diasCarrossel' => $diasCarrossel,
-            'dataBase' => $dataBase
+            'dataBase' => $dataBase,
+            'ocorrenciasAbertas' => $ocorrenciasAbertas
         ]);
     }
 
