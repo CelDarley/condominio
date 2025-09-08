@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name') }} - @yield('title', 'App')</title>
-    
+
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="{{ config('app.name') }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,20 +14,20 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#364659">
-    
+
     <!-- Manifest -->
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    
+
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('icons/icon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icons/icon-192x192.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('icons/icon-192x192.png') }}">
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+
     <style>
         :root {
             --primary-color: #364659;
@@ -36,11 +36,11 @@
             --status-bar-height: env(safe-area-inset-top);
             --bottom-bar-height: env(safe-area-inset-bottom);
         }
-        
+
         * {
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
@@ -49,14 +49,14 @@
             padding-bottom: var(--bottom-bar-height);
             overflow-x: hidden;
         }
-        
+
         .pwa-container {
             max-width: 100%;
             margin: 0;
             padding: 20px 15px;
-            min-height: calc(100vh - var(--status-bar-height) - var(--bottom-bar-height));
+            height: calc(100vh - var(--status-bar-height) - var(--bottom-bar-height));
         }
-        
+
         .card {
             border: none;
             border-radius: 20px;
@@ -64,7 +64,7 @@
             backdrop-filter: blur(10px);
             background: rgba(255, 255, 255, 0.95);
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             border: none;
@@ -73,24 +73,24 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(54, 70, 89, 0.4);
         }
-        
+
         .form-control {
             border: 2px solid var(--accent-color);
             border-radius: 15px;
             padding: 15px;
             font-size: 16px; /* Previne zoom no iOS */
         }
-        
+
         .form-control:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(54, 70, 89, 0.25);
         }
-        
+
         .input-group-text {
             background-color: var(--accent-color);
             border: 2px solid var(--accent-color);
@@ -98,32 +98,32 @@
             border-radius: 15px 0 0 15px;
             color: var(--primary-color);
         }
-        
+
         .input-group .form-control {
             border-left: none;
             border-radius: 0 15px 15px 0;
         }
-        
+
         .btn-outline-secondary {
             border-color: var(--secondary-color);
             color: var(--secondary-color);
             border-radius: 0 15px 15px 0;
         }
-        
+
         .btn-outline-secondary:hover {
             background-color: var(--secondary-color);
             border-color: var(--secondary-color);
         }
-        
+
         .alert {
             border-radius: 15px;
             margin-bottom: 20px;
         }
-        
+
         .text-center {
             text-align: center;
         }
-        
+
         /* Navegação inferior OTIMIZADA */
         .bottom-nav {
             position: fixed;
@@ -139,7 +139,7 @@
             height: 65px; /* Altura fixa menor */
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        
+
         /* Área de digitação flutuante - POSIÇÃO CENTRAL */
         .floating-input-area {
             position: fixed;
@@ -158,21 +158,21 @@
             transition: all 0.3s ease;
             max-height: 60px;
         }
-        
+
         /* Posição centralizada funciona em todas as páginas */
         /* Removido ajuste específico - área agora é sempre centralizada */
-        
+
         /* Estilos específicos para página do feed */
         .feed-page {
             padding-bottom: 20px; /* Sem necessidade de espaço extra para barra */
         }
-        
+
         .floating-input-area.active {
             transform: translateY(-50%); /* Mantém centralizada quando ativa */
             opacity: 1;
             visibility: visible;
         }
-        
+
         .floating-input-area .form-control {
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px;
@@ -182,17 +182,17 @@
             background: rgba(255, 255, 255, 0.9);
             color: var(--primary-color);
         }
-        
+
         .floating-input-area .form-control::placeholder {
             color: rgba(54, 70, 89, 0.7);
         }
-        
+
         .floating-input-area .form-control:focus {
             border-color: rgba(255, 255, 255, 0.8);
             box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
             background: white;
         }
-        
+
         .floating-input-area .btn {
             border-radius: 20px;
             padding: 8px 16px; /* Padding reduzido */
@@ -201,35 +201,35 @@
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
+
         .floating-input-area .btn-primary {
             background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.3);
         }
-        
+
         .floating-input-area .btn-primary:hover {
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.5);
             transform: translateY(-1px);
         }
-        
+
         .floating-input-area .btn-outline-secondary {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.3);
             color: white;
         }
-        
+
         .floating-input-area .btn-outline-secondary:hover {
             background: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.5);
             color: white;
         }
-        
+
         .bottom-nav .nav-item {
             flex: 1;
             text-align: center;
         }
-        
+
         .bottom-nav .nav-link {
             color: var(--secondary-color);
             font-size: 11px; /* Menor para economizar espaço */
@@ -238,27 +238,27 @@
             flex-direction: column;
             align-items: center;
         }
-        
+
         .bottom-nav .nav-link.active {
             color: var(--primary-color);
         }
-        
+
         .bottom-nav .nav-link i {
             font-size: 18px; /* Reduzido de 20px para 18px */
             margin-bottom: 2px; /* Reduzido */
         }
-        
+
         /* Ajustes para área flutuante + barra otimizada */
         .with-bottom-nav {
             padding-bottom: 80px; /* Espaço para barra + área flutuante */
         }
-        
+
         @media (max-width: 768px) {
             .with-bottom-nav {
                 padding-bottom: 100px !important;
             }
         }
-        
+
         /* Estilos específicos para PWA */
         @media (display-mode: standalone) {
             .pwa-only {
@@ -268,11 +268,11 @@
                 display: none !important;
             }
         }
-        
+
         .pwa-only {
             display: none;
         }
-        
+
         /* Loading spinner */
         .loading {
             position: fixed;
@@ -281,7 +281,7 @@
             transform: translate(-50%, -50%);
             z-index: 9999;
         }
-        
+
         .spinner {
             width: 40px;
             height: 40px;
@@ -290,13 +290,13 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
     </style>
-    
+
     @yield('styles')
 </head>
 <body @if(isset($bodyClass)) class="{{ $bodyClass }}" @endif @if(isset($bodyStyle)) style="{{ $bodyStyle }}" @endif>
@@ -315,7 +315,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-        
+
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-circle me-2"></i>
@@ -323,7 +323,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-        
+
         @if($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -336,7 +336,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-        
+
         @yield('content')
     </div>
 
@@ -409,7 +409,7 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
         // PWA Registration
         if ('serviceWorker' in navigator) {
@@ -444,7 +444,7 @@
         function ativarPanico() {
             if (confirm('Tem certeza que deseja ativar o botão de pânico?')) {
                 showLoading();
-                
+
                 // Aqui você faria a requisição AJAX para ativar o pânico
                 fetch('/panico', {
                     method: 'POST',
@@ -485,7 +485,7 @@
         // Controle da área de digitação flutuante
         function setupFloatingInputControl() {
             console.log('🔍 Configurando controle da área de digitação flutuante...');
-            
+
             // Criar área flutuante se não existir
             let floatingArea = document.querySelector('.floating-input-area');
             if (!floatingArea) {
@@ -506,29 +506,29 @@
             }
 
             let currentOriginalField = null;
-            
+
             // Mostrar área flutuante quando input/textarea recebe foco
             document.addEventListener('focusin', function(e) {
                 console.log('🔍 Elemento focado:', e.target.tagName, e.target.type, e.target);
                 if (e.target.matches('input[type="text"], textarea') && !e.target.id.includes('floating')) {
                     console.log('🎯 Campo de input focado, mostrando área flutuante!');
                     currentOriginalField = e.target;
-                    
+
                     // Copiar valor atual para área flutuante
                     const floatingInput = document.getElementById('floatingInput');
                     if (floatingInput) {
                         floatingInput.value = e.target.value;
                         floatingInput.placeholder = e.target.placeholder || 'Digite aqui...';
                     }
-                    
+
                     // Mostrar área flutuante
                     floatingArea.classList.add('active');
-                    
+
                     // Focar na área flutuante
                     setTimeout(() => {
                         floatingInput.focus();
                     }, 300);
-                    
+
                     // Desfocar campo original
                     e.target.blur();
                 }
@@ -541,20 +541,20 @@
                     floatingArea.classList.remove('active');
                     currentOriginalField = null;
                 }
-                
+
                 if (e.target.id === 'floatingSubmit' || e.target.closest('#floatingSubmit')) {
                     console.log('📤 Enviando da área flutuante');
                     const floatingInput = document.getElementById('floatingInput');
                     if (currentOriginalField && floatingInput) {
                         // Copiar valor de volta para campo original
                         currentOriginalField.value = floatingInput.value;
-                        
+
                         // Simular envio no campo original
                         const form = currentOriginalField.closest('form');
                         if (form) {
                             form.dispatchEvent(new Event('submit'));
                         }
-                        
+
                         // Fechar área flutuante
                         floatingArea.classList.remove('active');
                         floatingInput.value = '';
@@ -569,7 +569,7 @@
                     e.preventDefault();
                     document.getElementById('floatingSubmit').click();
                 }
-                
+
                 // ESC para fechar
                 if (e.key === 'Escape' && floatingArea.classList.contains('active')) {
                     document.getElementById('floatingClose').click();
@@ -580,7 +580,7 @@
         // Inicializar controle da área flutuante
         setupFloatingInputControl();
     </script>
-    
+
     @yield('scripts')
 </body>
-</html> 
+</html>
