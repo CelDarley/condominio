@@ -149,6 +149,7 @@
         max-width: 300px;
         height: auto;
         display: block;
+        object-fit: contain;
     }
 
     .message-media video {
@@ -700,6 +701,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${post.medias.map(media => {
                     if (media.tipo === 'imagem') {
                         return `<img src="${media.url}" alt="${media.arquivo_nome}">`;
+                    } else if (media.tipo === 'video') {
+                        return `
+                            <video controls>
+                                <source src="${media.url }" type="${ media.mime_type }">
+                                Seu navegador não suporta vídeo.
+                            </video>
+                        `;
+                    } else if (media.tipo === 'audio') {
+                        return `
+                            <audio controls>
+                                <source src="${ media.url }" type="${ media.mime_type }">
+                                Seu navegador não suporta áudio.
+                            </audio>
+                        `;
                     }
                     return '';
                 }).join('')}

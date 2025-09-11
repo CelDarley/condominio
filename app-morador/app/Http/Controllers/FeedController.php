@@ -218,7 +218,7 @@ class FeedController extends Controller
 
             // Gerar nome único para o arquivo
             $nomeArquivo = time() . '_' . uniqid() . '.' . $arquivo->getClientOriginalExtension();
-            $pasta = 'posts/' . $post->id . '/' . $tipo . 's';
+            $pasta = env('APP_ENV', 'local') . '/posts/' . $post->id . '/' . $tipo . 's';
 
             // Fazer upload do arquivo
             $caminhoArquivo = $arquivo->storeAs($pasta, $nomeArquivo, 'sftp_server');
