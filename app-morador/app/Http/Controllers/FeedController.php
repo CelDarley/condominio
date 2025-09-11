@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\PostMedia;
 use App\Events\PostUpdated;
+use Nette\Schema\ValidationException;
 
 class FeedController extends Controller
 {
@@ -37,69 +38,78 @@ class FeedController extends Controller
 
     /**
      * Criar um novo post
+     * @throws \Exception
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'conteudo' => 'nullable|string|max:1000',
-            'medias.*' => 'file|max:10240', // 10MB máximo por arquivo
-        ],
-        [
-            'medias.*.max' => 'O tamanho máximo de mídia não pode ultrapassar 10MB.'
-        ]);
+        try {
+            $request->validate([
+                'conteudo' => 'nullable|string|max:1000',
+                'medias.*' => 'file|max:10240', // 10MB máximo por arquivo
+            ],
+                [
+                    'medias.*.max' => 'O tamanho máximo de mídia não pode ultrapassar 10MB.'
+                ]);
 
-        // Validar que há conteúdo ou mídia
-        if (!$request->conteudo && !$request->hasFile('medias')) {
-            return back()->withErrors(['conteudo' => 'É necessário adicionar texto ou mídia ao post.']);
-        }
+            // Validar que há conteúdo ou mídia
+            if (!$request->conteudo && !$request->hasFile('medias')) {
+                return back()->withErrors(['conteudo' => 'É necessário adicionar texto ou mídia ao post.']);
+            }
 
-        $usuario = Auth::guard('morador')->user();
+            $usuario = Auth::guard('morador')->user();
 
-        // Criar o post
-        $post = Post::create([
-            'usuario_id' => $usuario->id,
-            'conteudo' => $request->conteudo,
-            'tipo' => $request->hasFile('medias') ? 'imagem' : 'texto', // Será ajustado depois
-            'ativo' => true,
-        ]);
-
-        // Processar arquivos de mídia se houver
-        if ($request->hasFile('medias')) {
-            $this->processarMedias($request->file('medias'), $post);
-        }
-
-        // Disparar evento para atualização em tempo real
-        broadcast(new PostUpdated($post->load(['usuario', 'medias']), 'created'));
-
-        // Se for requisição AJAX, retornar JSON
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Post criado com sucesso!',
-                'post' => [
-                    'id' => $post->id,
-                    'conteudo' => $post->conteudo,
-                    'tipo' => $post->tipo,
-                    'usuario' => [
-                        'id' => $post->usuario->id,
-                        'nome' => $post->usuario->nome,
-                    ],
-                    'likes' => $post->likes,
-                    'comentarios_count' => $post->comentarios_count,
-                    'tempo_decorrido' => $post->tempo_decorrido,
-                    'medias' => $post->medias->map(function ($media) {
-                        return [
-                            'id' => $media->id,
-                            'tipo' => $media->tipo,
-                            'arquivo_nome' => $media->arquivo_nome,
-                            'url' => route('media.show', $media->id),
-                        ];
-                    }),
-                ]
+            // Criar o post
+            $post = Post::create([
+                'usuario_id' => $usuario->id,
+                'conteudo' => $request->conteudo,
+                'tipo' => $request->hasFile('medias') ? 'imagem' : 'texto', // Será ajustado depois
+                'ativo' => true,
             ]);
-        }
 
-        return redirect()->route('feed.index')->with('success', 'Post criado com sucesso!');
+            // Processar arquivos de mídia se houver
+            if ($request->hasFile('medias')) {
+                $this->processarMedias($request->file('medias'), $post);
+            }
+
+            // Disparar evento para atualização em tempo real
+            broadcast(new PostUpdated($post->load(['usuario', 'medias']), 'created'));
+
+            // Se for requisição AJAX, retornar JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Post criado com sucesso!',
+                    'post' => [
+                        'id' => $post->id,
+                        'conteudo' => $post->conteudo,
+                        'tipo' => $post->tipo,
+                        'usuario' => [
+                            'id' => $post->usuario->id,
+                            'nome' => $post->usuario->nome,
+                        ],
+                        'likes' => $post->likes,
+                        'comentarios_count' => $post->comentarios_count,
+                        'tempo_decorrido' => $post->tempo_decorrido,
+                        'medias' => $post->medias->map(function ($media) {
+                            return [
+                                'id' => $media->id,
+                                'tipo' => $media->tipo,
+                                'arquivo_nome' => $media->arquivo_nome,
+                                'url' => route('media.show', $media->id),
+                            ];
+                        }),
+                    ]
+                ]);
+            }
+
+            return redirect()->route('feed.index')->with('success', 'Post criado com sucesso!');
+        } catch (ValidationException $e) {
+            \Log::error('Erro de validação no upload: ', $e->errors());
+            throw $e;
+        } catch (\Exception $exception) {
+            \Log::error('Erro de validação no upload: ', $exception->errors());
+            throw $exception; // deixa o fluxo normal continuar
+        }
     }
 
     /**

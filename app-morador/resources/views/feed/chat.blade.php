@@ -151,6 +151,14 @@
         display: block;
     }
 
+    .message-media video {
+        max-width: 100%;      /* limita largura da bolha */
+        max-height: 40vh;     /* limita altura em relação à tela */
+        border-radius: 10px;
+        object-fit: contain;  /* mostra o vídeo inteiro sem cortar */
+        background: #000;     /* se sobrar espaço, fica fundo preto */
+    }
+
     /* Área de digitação fixa */
     .chat-input-area {
         background: white;
@@ -540,7 +548,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateForm() {
         const hasText = messageInput.value.trim().length > 0;
         const hasFiles = mediaInput.files.length > 0;
-        sendBtn.disabled = !(hasText || hasFiles);
+
+        let hasError = false;
+        const mediaError = document.getElementById('mediaError');
+        mediaError.innerText = '';
+
+        Array.from(mediaInput.files).forEach(file => {
+            if (file.size > 10 * 1024 * 1024) { // 10 MB
+                hasError = true;
+                mediaError.innerText = `O arquivo "${file.name}" excede o limite de 10MB.`;
+            }
+        });
+
+        sendBtn.disabled = hasError || !(hasText || hasFiles);
     }
 
     // Selecionar mídia
@@ -552,20 +572,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Preview de mídias
     mediaInput.addEventListener('change', function() {
-        console.log("mudou");
-        let hasError = false;
-        const mediaError = document.getElementById('mediaError');
-        mediaError.innerText = '';
-
-        Array.from(mediaInput.files).forEach(file => {
-            if (file.size > 10 * 1024 * 1024) { // 100 MB
-                hasError = true;
-                mediaError.innerText = `O arquivo "${file.name}" excede o limite de 10MB.`;
-            }
-        });
-
         previewMedia();
-        sendBtn.disabled = hasError || (messageInput.value.trim().length === 0 && mediaInput.files.length === 0);
+        validateForm();
     });
 
     function previewMedia() {
@@ -631,12 +639,10 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(async response => {
             if (!response.ok) {
-                const errorData = await response.json();
 
-                if(errorData.errors && errorData.errors['medias.0']) {
-                    alert(errrorData.errors['medias.0'][0]);
-                } else {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (response.status === 422) {
+                    const data = await response.json();
+                    alert(data.message || "Erro de validação nos arquivos!");
                 }
             }else {
                 return response.json();
