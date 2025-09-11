@@ -406,6 +406,16 @@
                             @foreach($post->medias as $media)
                                 @if($media->tipo === 'imagem')
                                     <img src="{{ $media->url }}" alt="{{ $media->arquivo_nome }}">
+                                @elseif($media->tipo === 'video')
+                                    <video controls>
+                                        <source src="{{ $media->url }}" type="{{ $media->mime_type }}">
+                                        Seu navegador não suporta vídeo.
+                                    </video>
+                                @elseif($media->tipo === 'audio')
+                                    <audio controls>
+                                        <source src="{{ $media->url }}" type="{{ $media->mime_type }}">
+                                        Seu navegador não suporta áudio.
+                                    </audio>
                                 @endif
                             @endforeach
                         </div>
@@ -437,6 +447,7 @@
 
             <!-- Preview de mídias -->
             <div class="media-preview" id="mediaPreview"></div>
+            <div id="mediaError" style="color: #e74c3c; font-size: 14px; margin-top: 5px;"></div>
 
             <div class="input-container">
                 <div class="media-buttons">
@@ -541,8 +552,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Preview de mídias
     mediaInput.addEventListener('change', function() {
+        console.log("mudou");
+        let hasError = false;
+        const mediaError = document.getElementById('mediaError');
+        mediaError.innerText = '';
+
+        Array.from(mediaInput.files).forEach(file => {
+            if (file.size > 10 * 1024 * 1024) { // 100 MB
+                hasError = true;
+                mediaError.innerText = `O arquivo "${file.name}" excede o limite de 10MB.`;
+            }
+        });
+
         previewMedia();
-        validateForm();
+        sendBtn.disabled = hasError || (messageInput.value.trim().length === 0 && mediaInput.files.length === 0);
     });
 
     function previewMedia() {
@@ -583,6 +606,8 @@ document.addEventListener('DOMContentLoaded', function() {
         mediaInput.files = dt.files;
         previewMedia();
         validateForm();
+
+        mediaInput.dispatchEvent(new Event('change'));
     }
     window.removeMedia = removeMedia;
 
@@ -604,11 +629,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => {
+        .then(async response => {
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const errorData = await response.json();
+
+                if(errorData.errors && errorData.errors['medias.0']) {
+                    alert(errrorData.errors['medias.0'][0]);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            }else {
+                return response.json();
             }
-            return response.json();
         })
         .then(data => {
             if (data.success) {
@@ -656,6 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Função para criar HTML da mensagem
     function createMessageHTML(post, isOwn = false) {
+        console.log(post);
         const mediasHtml = post.medias && post.medias.length > 0 ?
             `<div class="message-media">
                 ${post.medias.map(media => {
