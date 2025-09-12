@@ -18,23 +18,23 @@ class DashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             // Verificar se o usuário está autenticado
             if (!$user) {
                 return redirect()->route('login')->with('error', 'Usuário não autenticado.');
             }
-            
+
             // Obter data base (hoje por padrão ou data passada via parâmetro)
-            $dataBase = $request->get('data') ? 
-                \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('data')) : 
+            $dataBase = $request->get('data') ?
+                \Carbon\Carbon::createFromFormat('Y-m-d', $request->get('data')) :
                 now();
-            
+
             // Usar a nova lógica de escala efetiva (que considera ajustes diários)
             $escala = EscalaDiaria::getEscalaVigilante($dataBase->format('Y-m-d'), $user->id);
         } catch (\Exception $e) {
             // Em caso de erro, retornar dados vazios para não quebrar a view
             \Log::error('Erro no dashboard: ' . $e->getMessage());
-            
+
             $escala = null;
             $dataBase = now();
             $user = Auth::user(); // Garantir que user está definido
@@ -53,10 +53,10 @@ class DashboardController extends Controller
         $diasCarrossel = [];
         for ($i = -3; $i <= 3; $i++) {
             $data = $dataBase->copy()->addDays($i);
-            
+
             // Verificar se há escala para este dia (considerando ajustes) apenas se user existe
             $escalaData = $user ? EscalaDiaria::getEscalaVigilante($data->format('Y-m-d'), $user->id) : null;
-            
+
             $diasCarrossel[] = [
                 'data' => $data->format('Y-m-d'),
                 'nome' => $this->getNomeDiaCurto($data->dayOfWeek == 0 ? 6 : $data->dayOfWeek - 1),
@@ -86,14 +86,14 @@ class DashboardController extends Controller
     public function postosPorData(Request $request, $data)
     {
         $user = Auth::user();
-        
+
         // Usar a nova lógica de escala efetiva
         $escala = EscalaDiaria::getEscalaVigilante($data, $user->id);
 
         if ($escala) {
             $posto = $escala->postoTrabalho;
             $cartaoPrograma = $escala->cartaoPrograma;
-            
+
             $result = [
                 'posto' => $posto ? [
                     'id' => $posto->id,
@@ -112,7 +112,7 @@ class DashboardController extends Controller
                     'usuario_original' => $escala->ajuste_diario->usuarioOriginal->nome ?? 'N/A'
                 ] : null
             ];
-            
+
             return response()->json($result);
         }
 
@@ -123,7 +123,7 @@ class DashboardController extends Controller
     {
         $dias = [
             0 => 'Segunda-feira',
-            1 => 'Terça-feira', 
+            1 => 'Terça-feira',
             2 => 'Quarta-feira',
             3 => 'Quinta-feira',
             4 => 'Sexta-feira',
@@ -148,4 +148,20 @@ class DashboardController extends Controller
 
         return $dias[$dia] ?? '?';
     }
-} 
+
+    public function atualizarLocalizacao(Request $request) {
+        $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric'
+        ]);
+
+        $user = Auth::user();
+
+        $user->coordenadas_atual = [
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude
+        ];
+        $user->ultima_atualizacao_localizacao = now();
+        $user->save();
+    }
+}

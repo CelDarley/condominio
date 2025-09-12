@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SegCond Vigilante - Dashboard</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         :root {
             --primary-dark: #364659;
@@ -19,23 +19,23 @@
             --white: #ffffff;
             --text-dark: #2c3e50;
         }
-        
+
         body {
             background: var(--light-gray);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         .navbar {
             background: linear-gradient(45deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
         }
-        
+
         .card {
             border: none;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        
+
         .btn-primary {
             background: linear-gradient(45deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
             border: none;
@@ -51,7 +51,7 @@
                 <i class="fas fa-shield-alt me-2"></i>
                 SegCond Vigilante
             </a>
-            
+
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="#" onclick="logout()">
                     <i class="fas fa-sign-out-alt me-1"></i>Sair
@@ -85,7 +85,7 @@
         @if(isset($escalaDiaria))
         <div class="row">
             <div class="col-12">
-                <div class="card clickable-card" style="cursor: pointer; transition: all 0.3s ease;" 
+                <div class="card clickable-card" style="cursor: pointer; transition: all 0.3s ease;"
                      onclick="window.location.href='{{ route('posto.show', $escalaDiaria->posto_trabalho_id) }}';"
                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)';"
                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.1)';">
@@ -132,7 +132,7 @@
                                 @endif
                             </div>
                         </div>
-                        
+
                         @if($escalaDiaria->cartaoPrograma)
                         <div class="row mt-3">
                             <div class="col-12">
@@ -250,7 +250,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body text-center">
@@ -271,7 +271,9 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
+    @vite('resources/js/app.js')
+
     <script>
         // Logout
         function logout() {
@@ -286,7 +288,7 @@
                 });
             }
         }
-        
+
         // Exibir mensagem de sucesso se houver
         @if(session('success'))
             alert('{{ session('success') }}');
