@@ -60,6 +60,16 @@ return [
             'report' => false,
         ],
 
+        'sftp_server' => [
+            'driver' => 'sftp',
+            'host' => env('SFTP_HOST'), // IP ou hostname da máquina
+            'username' => env('SFTP_USERNAME'),
+            'password' => env('SFTP_PASSWORD'),
+            'root' => env('SFTP_ROOT',), // pasta de destino na máquina remota
+            'port' => (int) env('SFTP_PORT', 22),
+            'timeout' => 30,
+        ],
+
     ],
 
     /*

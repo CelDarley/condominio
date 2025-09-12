@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rbx-security-v1';
+const CACHE_NAME = 'rbx-security-v1.2';
 const urlsToCache = [
     '/',
     '/login',
@@ -16,11 +16,23 @@ self.addEventListener('install', event => {
                 console.log('Cache opened');
                 return cache.addAll(urlsToCache);
             })
+            .then(() => self.skipWaiting())
     );
 });
 
 // Fetch event
 self.addEventListener('fetch', event => {
+    console.log('[Service Worker] interceptando fetch:', event.request.url);
+
+    const url = new URL(event.request.url);
+
+    const isStatic = url.pathname.match(/\.(?:js|css|png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|eot)$/i);
+
+    if (!isStatic && !url.pathname.endsWith('/manifest.json')) {
+        // Se não for arquivo estático nem o manifest.json -> ignora
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request)
             .then(response => {
@@ -53,7 +65,7 @@ self.addEventListener('fetch', event => {
 // Activate event
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
-    
+
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
@@ -63,7 +75,7 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
 
@@ -106,4 +118,4 @@ self.addEventListener('notificationclick', event => {
             clients.openWindow('/')
         );
     }
-}); 
+});

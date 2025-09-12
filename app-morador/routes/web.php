@@ -20,7 +20,7 @@ Route::middleware(['auth.morador'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
     Route::get('/alertas', [AlertaController::class, 'index'])->name('alertas.index');
     Route::get('/alertas/{alerta}', [AlertaController::class, 'show'])->name('alertas.show');
-    
+
     // Feed da comunidade
             Route::get('/feed', [FeedController::class, 'chat'])->name('feed.index');
     Route::post('/feed', [FeedController::class, 'store'])->name('feed.store');
@@ -28,15 +28,16 @@ Route::middleware(['auth.morador'])->group(function () {
     Route::post('/feed/{post}/comment', [FeedController::class, 'comment'])->name('feed.comment');
     Route::delete('/feed/{post}', [FeedController::class, 'destroy'])->name('feed.destroy');
     Route::delete('/feed/comment/{comment}', [FeedController::class, 'destroyComment'])->name('feed.comment.destroy');
-    
+    Route::get('/media/{id}', [FeedController::class, 'getMedia'])->name('media.show');
+
     // Comentários
     Route::post('/comentarios', [ComentarioController::class, 'store'])->name('comentarios.store');
     Route::delete('/comentarios/{comentario}', [ComentarioController::class, 'destroy'])->name('comentarios.destroy');
-    
+
     // Botão de pânico
     Route::post('/panico', [PanicoController::class, 'ativar'])->name('panico.ativar');
     Route::get('/panico/status', [PanicoController::class, 'status'])->name('panico.status');
-    
+
     // Logout
     Route::post('/logout', [MoradorController::class, 'logout'])->name('logout');
 });
