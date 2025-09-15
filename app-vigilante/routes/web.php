@@ -37,17 +37,17 @@ Route::group(['prefix' => 'auth'], function () {
 
 // Rotas protegidas por autenticação de vigilante
 Route::group(['middleware' => 'auth.vigilante'], function () {
-    
+    Route::post('/atualizar-localizacao', [DashboardController::class, 'atualizarLocalizacao'])->name('api.atualizar-localizacao');
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/postos-por-data/{data}', [DashboardController::class, 'postosPorData'])->name('api.postos-por-data');
-    
+
     // Postos de Trabalho
     Route::group(['prefix' => 'posto'], function () {
         Route::get('/{posto}', [PostoController::class, 'show'])->name('posto.show');
         Route::get('/{posto}/status-pontos', [PostoController::class, 'statusPontos'])->name('posto.status-pontos');
     });
-    
+
     // Registro de Presença
     Route::group(['prefix' => 'presenca'], function () {
         Route::post('/chegada/{ponto}', [PresencaController::class, 'registrarChegada'])->name('presenca.chegada');
@@ -55,7 +55,7 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         Route::get('/status-hoje', [PresencaController::class, 'statusHoje'])->name('presenca.status-hoje');
         Route::get('/historico', [PresencaController::class, 'historico'])->name('presenca.historico');
     });
-    
+
     // Avisos
     Route::group(['prefix' => 'avisos'], function () {
         Route::get('/', [AvisoController::class, 'index'])->name('avisos.index');
@@ -65,12 +65,12 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         Route::get('/{aviso}/editar', [AvisoController::class, 'edit'])->name('avisos.edit');
         Route::put('/{aviso}', [AvisoController::class, 'update'])->name('avisos.update');
         Route::delete('/{aviso}', [AvisoController::class, 'destroy'])->name('avisos.destroy');
-        
+
         // API para avisos rápidos
         Route::post('/enviar-rapido', [AvisoController::class, 'enviarRapido'])->name('avisos.enviar-rapido');
         Route::post('/panico', [AvisoController::class, 'panico'])->name('avisos.panico');
     });
-    
+
     // Ocorrências
     Route::group(['prefix' => 'ocorrencias'], function () {
         Route::get('/', [OcorrenciaController::class, 'index'])->name('ocorrencias.index');
@@ -82,7 +82,7 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         Route::delete('/{ocorrencia}/anexo', [OcorrenciaController::class, 'removeAnexo'])->name('ocorrencias.remove-anexo');
         Route::get('/{ocorrencia}/anexo/{indice}', [OcorrenciaController::class, 'downloadAnexo'])->name('ocorrencias.download-anexo');
     });
-    
+
     // Câmeras Compartilhadas
     Route::group(['prefix' => 'cameras'], function () {
         Route::get('/', [CameraController::class, 'index'])->name('cameras.index');
@@ -91,7 +91,7 @@ Route::group(['middleware' => 'auth.vigilante'], function () {
         Route::get('/buscar', [CameraController::class, 'buscar'])->name('cameras.buscar');
         Route::get('/estatisticas', [CameraController::class, 'estatisticas'])->name('cameras.estatisticas');
     });
-    
+
 });
 
 // Rota de teste
