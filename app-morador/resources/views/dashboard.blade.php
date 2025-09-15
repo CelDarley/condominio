@@ -9,7 +9,7 @@
         background: none;
         border: none;
     }
-    
+
     .vigilante-icon {
         background: linear-gradient(135deg, #007bff, #0056b3);
         border: 3px solid white;
@@ -24,7 +24,7 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
         0% {
             box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
@@ -36,22 +36,22 @@
             box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
         }
     }
-    
+
     .vigilante-popup {
         min-width: 200px;
     }
-    
+
     .vigilante-popup h6 {
         margin-bottom: 10px;
         border-bottom: 1px solid #eee;
         padding-bottom: 5px;
     }
-    
+
     .vigilante-popup p {
         margin-bottom: 5px;
         font-size: 13px;
     }
-    
+
     /* Estilo do mapa */
     #map {
         border-radius: 10px;
@@ -139,7 +139,7 @@
                                             {{ $alerta->created_at ? $alerta->created_at->diffForHumans() : 'Data não disponível' }}
                                         </small>
                                     </div>
-                                    
+
                                     <!-- Comentários do Alerta -->
                                     @if($alerta->comentarios->count() > 0)
                                         <div class="mt-3">
@@ -150,7 +150,7 @@
                                             @foreach($alerta->comentarios->take(3) as $comentario)
                                                 <div class="border-start border-2 ps-3 mb-2">
                                                     <small class="text-muted">
-                                                        <strong>{{ $comentario->morador->nome }}</strong> 
+                                                        <strong>{{ $comentario->morador->nome }}</strong>
                                                         disse há {{ $comentario->created_at ? $comentario->created_at->diffForHumans() : 'data não disponível' }}:
                                                     </small>
                                                     <p class="mb-1 small">{{ $comentario->conteudo }}</p>
@@ -164,13 +164,13 @@
                                             @endif
                                         </div>
                                     @endif
-                                    
+
                                     <!-- Formulário para novo comentário -->
                                     <div class="mt-3">
                                         <form class="comentario-form" data-alerta-id="{{ $alerta->id }}">
                                             <div class="input-group">
-                                                <input type="text" class="form-control" 
-                                                       placeholder="Adicionar comentário..." 
+                                                <input type="text" class="form-control"
+                                                       placeholder="Adicionar comentário..."
                                                        name="conteudo" required>
                                                 <button type="submit" class="btn btn-outline-primary">
                                                     <i class="fas fa-paper-plane"></i>
@@ -179,7 +179,7 @@
                                         </form>
                                     </div>
                                 </div>
-                                
+
                                 @if($alerta->localizacao)
                                     <div class="ms-3">
                                         <small class="text-muted">
@@ -191,7 +191,7 @@
                             </div>
                         </div>
                     @endforeach
-                    
+
                     <div class="text-center mt-3">
                         <a href="{{ route('alertas.index') }}" class="btn btn-outline-warning">
                             <i class="fas fa-list me-2"></i>Ver Todos os Alertas
@@ -288,19 +288,19 @@
                             <option value="outro">Outro</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="descricao" class="form-label">Descrição (opcional)</label>
-                        <textarea class="form-control" id="descricao" name="descricao" rows="3" 
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3"
                                   placeholder="Descreva brevemente a situação..."></textarea>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="localizacao" class="form-label">Localização (opcional)</label>
-                        <input type="text" class="form-control" id="localizacao" name="localizacao" 
+                        <input type="text" class="form-control" id="localizacao" name="localizacao"
                                placeholder="Ex: Bloco A, Apartamento 101">
                     </div>
-                    
+
                     <div class="alert alert-warning">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Atenção:</strong> Esta solicitação será enviada imediatamente para todos os vigilantes online.
@@ -324,21 +324,66 @@
 $(document).ready(function() {
     // Inicializar mapa com a localização de teste
     window.vigilantesMap = L.map('map').setView([-19.9720213, -43.9597552], 16); // Coordenadas de teste
-    
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(window.vigilantesMap);
-    
+
     // Adicionar marcador de vigilante de teste
-    const vigilanteTeste = L.marker([-19.9720213, -43.9597552], {
+    /* const vigilanteTeste = L.marker([-19.9720213, -43.9597552], {
         icon: L.divIcon({
             className: 'vigilante-marker',
             html: '<div class="vigilante-icon"><i class="fas fa-shield-alt"></i></div>',
             iconSize: [30, 30],
             iconAnchor: [15, 15]
         })
-    }).addTo(window.vigilantesMap);
-    
+    }).addTo(window.vigilantesMap); */
+
+    let markers = {};
+
+    async function atualizarLocalizacoes() {
+        const response = await fetch('/api/vigilantes/posicao');
+        const data = await response.json();
+
+        data.forEach(user => {
+            if(!user.coordenadas_atual) return;
+
+            const { latitude, longitude } = user.coordenadas_atual;
+
+            if (markers[user.id]) {
+                // Atualiza posição do marcador
+                markers[user.id].setLatLng([latitude, longitude]);
+            } else {
+                console.log('Dale')
+                // Cria novo marcador
+                markers[user.id] = L.marker([latitude, longitude], {
+                    icon: L.divIcon({
+                        className: 'vigilante-marker',
+                        html: '<div class="vigilante-icon"><i class="fas fa-shield-alt"></i></div>',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    })
+                }).addTo(window.vigilantesMap);
+
+                markers[user.id].bindPopup(`
+                     <div class="vigilante-popup">
+                        <h6><i class="fas fa-shield-alt text-primary"></i> ${user.nome || 'Nome vigilante'}</h6>
+                        <p><strong>Status:</strong> <span class="badge badge-success">Online</span></p>
+                        <p><strong>Última atualização:</strong> ${new Date(user.ultima_atualizacao_localizacao).toLocaleString('pt-br')}</p>
+                        <p><strong>Coordenadas:</strong> ${latitude.toFixed(7)}, ${longitude.toFixed(7)}</p>
+                        <p><strong>Escala:</strong> Turno Noturno (18h-06h)</p>
+                        <small class="text-muted">Localização em tempo real • Atualizando...</small>
+                    </div>
+                `)
+
+                // atualizarPopupVigilante(markers[user.id], latitude, longitude);
+            }
+        });
+    }
+
+    atualizarLocalizacoes();
+    setInterval(atualizarLocalizacoes, 30000);
+
     // Função para atualizar o popup do vigilante
     function atualizarPopupVigilante(marker, lat, lng) {
         const popup = `
@@ -353,10 +398,7 @@ $(document).ready(function() {
         `;
         marker.bindPopup(popup);
     }
-    
-    // Inicializar popup
-    atualizarPopupVigilante(vigilanteTeste, -19.9720213, -43.9597552);
-    
+
     // Adicionar círculo para área de cobertura do ponto base
     const areaCoberturaVigilante = L.circle([-19.9720213, -43.9597552], {
         color: '#007bff',
@@ -364,7 +406,7 @@ $(document).ready(function() {
         fillOpacity: 0.1,
         radius: 50 // 50 metros de raio
     }).addTo(window.vigilantesMap);
-    
+
     areaCoberturaVigilante.bindPopup(`
         <div class="area-popup">
             <h6><i class="fas fa-map-marker-alt text-info"></i> Ponto Base: Teste Localização</h6>
@@ -373,51 +415,52 @@ $(document).ready(function() {
             <small class="text-muted">Ponto criado para teste de localização</small>
         </div>
     `);
-    
-    // Simular movimento do vigilante (opcional para teste)
+
+   /*  // Simular movimento do vigilante (opcional para teste)
     let currentLat = -19.9720213;
     let currentLng = -43.9597552;
     let movimento = 0;
-    
+
     setInterval(function() {
         // Simular pequeno movimento (como se o vigilante estivesse patrulhando)
-        const movimentoLat = (Math.sin(movimento) * 0.0001); // Movimento muito sutil
-        const movimentoLng = (Math.cos(movimento) * 0.0001);
-        
-        currentLat = -19.9720213 + movimentoLat;
-        currentLng = -43.9597552 + movimentoLng;
-        
+        const movimentoLat = (Math.sin(movimento) * 0.0010); // Movimento muito sutil
+        const movimentoLng = (Math.cos(movimento) * 0.0010);
+
+        pos = markers[6].getLatLng();
+        currentLat = pos.lat + movimentoLat;
+        currentLng = pos.lng + movimentoLng;
+
         // Atualizar posição do marcador
-        vigilanteTeste.setLatLng([currentLat, currentLng]);
-        
+        markers[6].setLatLng([currentLat, currentLng]);
+
         // Atualizar popup com nova localização
-        atualizarPopupVigilante(vigilanteTeste, currentLat, currentLng);
-        
+        atualizarPopupVigilante(markers[6], currentLat, currentLng);
+
         movimento += 0.1;
-    }, 5000); // Atualizar a cada 5 segundos
-    
+    }, 5000); // Atualizar a cada 5 segundos*/
+
     // Capturar localização do usuário para o botão de pânico (apenas para coordenadas, sem mostrar no mapa)
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-            
+
             // Adicionar campos hidden ao formulário (mantendo funcionalidade do pânico)
             $('#panicoForm').append(`
                 <input type="hidden" name="latitude" value="${latitude}">
                 <input type="hidden" name="longitude" value="${longitude}">
             `);
-            
+
             console.log('Localização do usuário capturada para pânico:', latitude, longitude);
         });
     }
-    
+
     // Envio do formulário de pânico via AJAX
     $('#panicoForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         const formData = new FormData(this);
-        
+
         $.ajax({
             url: $(this).attr('action'),
             method: 'POST',
@@ -427,7 +470,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     $('#panicoModal').modal('hide');
-                    
+
                     // Mostrar mensagem de sucesso
                     const alert = $(`
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -436,12 +479,12 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     $('.container').prepend(alert);
-                    
+
                     // Scroll para o topo
                     $('html, body').animate({ scrollTop: 0 }, 500);
-                    
+
                     // Recarregar a página para atualizar as solicitações
                     setTimeout(function() {
                         location.reload();
@@ -453,15 +496,15 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     // Envio de comentários em alertas
     $('.comentario-form').on('submit', function(e) {
         e.preventDefault();
-        
+
         const form = $(this);
         const alertaId = form.data('alerta-id');
         const conteudo = form.find('input[name="conteudo"]').val();
-        
+
         $.ajax({
             url: '{{ route("comentarios.store") }}',
             method: 'POST',
@@ -474,7 +517,7 @@ $(document).ready(function() {
             success: function(response) {
                 // Limpar campo
                 form.find('input[name="conteudo"]').val('');
-                
+
                 // Recarregar a página para mostrar o novo comentário
                 location.reload();
             },
@@ -483,14 +526,14 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     // Envio de comentários gerais
     $('.comentario-geral-form').on('submit', function(e) {
         e.preventDefault();
-        
+
         const form = $(this);
         const formData = new FormData(this);
-        
+
         $.ajax({
             url: '{{ route("comentarios.store") }}',
             method: 'POST',
@@ -501,7 +544,7 @@ $(document).ready(function() {
                 // Limpar campos
                 form.find('textarea[name="conteudo"]').val('');
                 form.find('select[name="tipo"]').val('');
-                
+
                 // Mostrar mensagem de sucesso
                 const alert = $(`
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -510,9 +553,9 @@ $(document).ready(function() {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 $('.container').prepend(alert);
-                
+
                 // Scroll para o topo
                 $('html, body').animate({ scrollTop: 0 }, 500);
             },
