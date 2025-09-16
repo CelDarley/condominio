@@ -7,13 +7,8 @@ self.addEventListener('activate', event => {
     clients.claim();
 });
 
-function solicitarLocalizacao() {
-    self.clients.matchAll().then(allClients => {
-        allClients.forEach(client => {
-            client.postMessage({ action: 'requestLocation' });
-        });
-    });
-}
-
-// Envia solicitação de localização a cada 1 minuto
-setInterval(solicitarLocalizacao, 60 * 1000);
+self.addEventListener('message', event => {
+    if (event.data.action === 'pingLocation') {
+        navigator.serviceWorker.controller.postMessage({action: 'requestLocation'});
+    }
+});
