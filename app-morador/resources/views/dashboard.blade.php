@@ -382,7 +382,7 @@ $(document).ready(function() {
     }
 
     atualizarLocalizacoes();
-    setInterval(atualizarLocalizacoes, 30000);
+    setInterval(atualizarLocalizacoes, 30 * 1000);
 
     // Função para atualizar o popup do vigilante
     function atualizarPopupVigilante(marker, lat, lng) {
@@ -415,29 +415,6 @@ $(document).ready(function() {
             <small class="text-muted">Ponto criado para teste de localização</small>
         </div>
     `);
-
-   /*  // Simular movimento do vigilante (opcional para teste)
-    let currentLat = -19.9720213;
-    let currentLng = -43.9597552;
-    let movimento = 0;
-
-    setInterval(function() {
-        // Simular pequeno movimento (como se o vigilante estivesse patrulhando)
-        const movimentoLat = (Math.sin(movimento) * 0.0010); // Movimento muito sutil
-        const movimentoLng = (Math.cos(movimento) * 0.0010);
-
-        pos = markers[6].getLatLng();
-        currentLat = pos.lat + movimentoLat;
-        currentLng = pos.lng + movimentoLng;
-
-        // Atualizar posição do marcador
-        markers[6].setLatLng([currentLat, currentLng]);
-
-        // Atualizar popup com nova localização
-        atualizarPopupVigilante(markers[6], currentLat, currentLng);
-
-        movimento += 0.1;
-    }, 5000); // Atualizar a cada 5 segundos*/
 
     // Capturar localização do usuário para o botão de pânico (apenas para coordenadas, sem mostrar no mapa)
     if (navigator.geolocation) {

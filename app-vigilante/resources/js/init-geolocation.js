@@ -29,5 +29,18 @@ export function initGeolocation() {
                 }
             }
         });
+
+        async function sendPing() {
+            const reg = await navigator.serviceWorker.ready;
+            const sw = navigator.serviceWorker.controller || reg.active;
+            if (sw) {
+                sw.postMessage({ action: 'pingLocation' });
+                console.log('[client] ping enviado');
+            }
+        }
+
+        sendPing();
+
+        setInterval(sendPing, 5 * 1000);
     }
 }
